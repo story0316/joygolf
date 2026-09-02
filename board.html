@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>후기게시판 | JoyGolf</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="navbar"></div>
+
+  <div class="container">
+    <h1 class="page-title">📝 라운딩 후기 게시판</h1>
+    <p class="subtitle">오늘의 인생샷, 웃긴 에피소드, 라운딩 후기를 자유롭게 남겨보세요.</p>
+
+    <div class="card">
+      <h3>새 글 작성</h3>
+      <form id="postForm">
+        <label for="postTitle">제목</label>
+        <input type="text" id="postTitle" required placeholder="예: 오늘 첫 이글 했습니다 🎉" />
+
+        <label for="postContent">내용</label>
+        <textarea id="postContent" rows="4" placeholder="후기를 남겨주세요"></textarea>
+
+        <label for="postPhoto">사진 (선택)</label>
+        <input type="file" id="postPhoto" accept="image/*" />
+
+        <button type="submit" class="btn" id="submitBtn" style="margin-top: 16px;">✍️ 등록</button>
+      </form>
+    </div>
+
+    <div id="postList"></div>
+    <p class="empty-state" id="postEmpty" style="display:none;">아직 게시글이 없어요. 첫 후기를 남겨보세요!</p>
+  </div>
+
+  <div id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/supabaseClient.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/board.js"></script>
+</body>
+</html>

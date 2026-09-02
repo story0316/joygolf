@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>대시보드 | JoyGolf</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="navbar"></div>
+
+  <div class="container">
+    <h1 class="page-title">👋 오늘도 좋은 스윙 되세요!</h1>
+    <p class="subtitle" id="welcomeMsg"></p>
+
+    <div class="card">
+      <div class="level-box">
+        <div class="level-emoji" id="levelEmoji">🌱</div>
+        <div style="flex: 1;">
+          <div class="list-item-head">
+            <strong id="levelTitle">Lv.1 필드 새싹</strong>
+            <span class="hint" id="levelPoints">0 pt</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%;"></div></div>
+          <p class="hint" id="progressHint"></p>
+        </div>
+      </div>
+      <div class="stat-tiles" id="statTiles"></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>⬡ 내 육각형 역량</h3>
+        <p class="hint" id="radarHint">최근 6개월 인증 기록을 기반으로 계산돼요.</p>
+        <canvas id="radarChart" height="260"></canvas>
+      </div>
+
+      <div class="card">
+        <h3>🎖️ 획득 배지</h3>
+        <div id="badgeList" class="stat-tiles"></div>
+        <p class="empty-state" id="badgeEmpty" style="display:none;">아직 배지가 없어요. 첫 인증을 등록해보세요!</p>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>🕓 최근 활동</h3>
+        <div id="recentActivity"></div>
+        <p class="empty-state" id="activityEmpty" style="display:none;">아직 활동 기록이 없어요.</p>
+      </div>
+
+      <div class="card">
+        <h3>📅 다가오는 모임</h3>
+        <div id="upcomingMeetups"></div>
+        <p class="empty-state" id="meetupEmpty" style="display:none;">예정된 모임이 없어요.</p>
+        <a href="meetup.html" class="btn btn-outline btn-sm" style="margin-top: 10px;">모임 만들기 →</a>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/supabaseClient.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>

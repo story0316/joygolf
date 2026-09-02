@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JoyGolf | 사내 골프 동호회</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-logo">🏌️‍♂️⛳</div>
+      <h1 style="margin: 4px 0 2px; font-size: 1.4rem;">JoyGolf</h1>
+      <p class="subtitle" style="margin-bottom: 0;">우리 회사 골프 동호회, 함께 즐겨요!</p>
+
+      <div class="tabs">
+        <button class="tab-btn active" id="tabLogin">로그인</button>
+        <button class="tab-btn" id="tabSignup">회원가입</button>
+      </div>
+
+      <form id="authForm">
+        <label for="email">회사 이메일</label>
+        <input type="email" id="email" required placeholder="you@company.com" />
+
+        <div id="nameField" style="display:none;">
+          <label for="displayName">닉네임</label>
+          <input type="text" id="displayName" placeholder="필드에서 불릴 이름" />
+        </div>
+
+        <label for="password">비밀번호</label>
+        <input type="password" id="password" required minlength="6" placeholder="6자 이상" />
+
+        <button type="submit" class="btn" style="width: 100%; justify-content: center; margin-top: 18px;" id="submitBtn">
+          로그인
+        </button>
+      </form>
+      <p class="hint" id="formHint" style="margin-top: 14px;"></p>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/supabaseClient.js"></script>
+  <script src="js/auth.js"></script>
+</body>
+</html>

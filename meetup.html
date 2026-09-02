@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>모임 | JoyGolf</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="navbar"></div>
+
+  <div class="container">
+    <h1 class="page-title">📅 라운딩/연습 모임</h1>
+    <p class="subtitle">번개 라운딩이나 연습 모임을 만들고 참가 신청을 받아보세요.</p>
+
+    <div class="card">
+      <h3>새 모임 만들기</h3>
+      <form id="meetupForm">
+        <label for="title">모임 제목</label>
+        <input type="text" id="title" required placeholder="예: 토요일 오전 번개 라운딩" />
+
+        <div class="form-row">
+          <div>
+            <label for="meetupType">모임 종류</label>
+            <select id="meetupType">
+              <option value="round">라운딩</option>
+              <option value="practice">연습</option>
+              <option value="etc">기타</option>
+            </select>
+          </div>
+          <div>
+            <label for="maxPeople">모집 인원</label>
+            <input type="number" id="maxPeople" value="4" min="1" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div>
+            <label for="meetupDate">날짜/시간</label>
+            <input type="datetime-local" id="meetupDate" required />
+          </div>
+          <div>
+            <label for="location">장소</label>
+            <input type="text" id="location" placeholder="예: OO CC" />
+          </div>
+        </div>
+
+        <label for="description">설명 (선택)</label>
+        <textarea id="description" rows="2" placeholder="준비물, 참가비, 만나는 시간 등"></textarea>
+
+        <button type="submit" class="btn btn-orange" id="submitBtn" style="margin-top: 16px;">➕ 모임 만들기</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h3>예정된 모임</h3>
+      <div id="meetupList"></div>
+      <p class="empty-state" id="meetupEmpty" style="display:none;">예정된 모임이 없어요. 첫 모임을 만들어보세요!</p>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/supabaseClient.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/meetup.js"></script>
+</body>
+</html>

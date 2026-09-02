@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>랭킹 | JoyGolf</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="navbar"></div>
+
+  <div class="container">
+    <h1 class="page-title">🏆 이달의 상 &amp; 랭킹</h1>
+    <p class="subtitle" id="monthLabel"></p>
+    <p class="hint">비공개 프로필 회원도 집계에는 포함되며, 시상 노출에 동의한 경우에만 닉네임이 표시돼요. (설정은 프로필 페이지에서 변경 가능)</p>
+
+    <div id="awardWrap"></div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/supabaseClient.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/ranking.js"></script>
+</body>
+</html>
