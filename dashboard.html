@@ -43,12 +43,24 @@
         <div class="stat-tiles" id="statTiles"></div>
       </section>
 
+      <section class="card span-6">
+        <div class="section-label">
+          <h3>📈 스코어 추이</h3>
+          <a href="score.html" class="badge badge-gray">인증 추가 →</a>
+        </div>
+        <p class="hint" id="trendHint" style="margin-bottom: 10px;"></p>
+        <div class="chart-box"><canvas id="scoreTrendChart"></canvas></div>
+        <p class="empty-state" id="trendEmpty" style="display:none;">
+          아직 그릴 기록이 부족해요.<br />라운드를 2회 이상 인증하면 성장 곡선이 나타나요 📈
+        </p>
+      </section>
+
       <section class="card span-3">
         <div class="section-label">
           <h3>⬡ 내 육각형 역량</h3>
         </div>
         <p class="hint" id="radarHint" style="margin-bottom: 8px;">최근 6개월 인증 기록을 기반으로 계산돼요.</p>
-        <canvas id="radarChart" height="250"></canvas>
+        <div class="chart-box"><canvas id="radarChart"></canvas></div>
       </section>
 
       <section class="card span-3">

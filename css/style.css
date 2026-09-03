@@ -335,6 +335,12 @@ a { color: inherit; text-decoration: none; }
   margin-bottom: 14px;
 }
 
+/* 라인 차트는 높이를 고정해야 카드가 무한정 늘어나지 않는다 */
+.chart-box {
+  position: relative;
+  height: 240px;
+}
+
 /* ---------- 5. 상단 플로팅 네비 ---------- */
 /* transform 을 쓰지 않는다: transform 이 걸린 조상은 자식 position:fixed 의
    컨테이닝 블록이 되어버려서, 모바일 하단 독이 상단에 붙어버린다. */

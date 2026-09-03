@@ -19,12 +19,16 @@
   renderBadges(practiceLogs || [], scoreLogs || []);
   renderRecentActivity(practiceLogs || [], scoreLogs || []);
   renderUpcomingMeetups(meetups || []);
+  renderScoreTrend(scoreLogs || []);
   await renderRadar(user.id);
 
   JoyGolf.revealCards();
 
   // 테마를 바꾸면 차트 색상도 따라가야 해서 다시 그린다
-  document.addEventListener("joygolf:themechange", () => renderRadar(user.id));
+  document.addEventListener("joygolf:themechange", () => {
+    renderScoreTrend(scoreLogs || []);
+    renderRadar(user.id);
+  });
 })();
 
 function renderLevel(practiceLogs, scoreLogs) {
@@ -156,6 +160,124 @@ function renderUpcomingMeetups(meetups) {
     .join("");
 }
 
+// 차트 두 개가 공유하는 테마 색상
+function chartTheme() {
+  const isDark = window.JoyTheme && JoyTheme.current() === "dark";
+  return {
+    isDark,
+    gridColor: isDark ? "rgba(255, 255, 255, 0.09)" : "rgba(6, 46, 34, 0.09)",
+    labelColor: isDark ? "#b9cbc1" : "#33473d",
+    line: isDark ? "#34d399" : "#10b981",
+    fill: isDark ? "rgba(52, 211, 153, 0.18)" : "rgba(16, 185, 129, 0.16)",
+    pointBorder: isDark ? "#070c0a" : "#ffffff",
+  };
+}
+
+// 테마를 바꾸면 같은 캔버스에 다시 그리므로 기존 인스턴스를 먼저 정리한다
+function resetCanvas(id) {
+  const canvas = document.getElementById(id);
+  const existing = typeof Chart.getChart === "function" ? Chart.getChart(canvas) : null;
+  if (existing && typeof existing.destroy === "function") existing.destroy();
+  return canvas;
+}
+
+function renderScoreTrend(scoreLogs) {
+  const hint = document.getElementById("trendHint");
+  const empty = document.getElementById("trendEmpty");
+  const canvas = document.getElementById("scoreTrendChart");
+
+  // 오래된 라운드부터 최근 12개
+  const rounds = scoreLogs
+    .slice()
+    .sort((a, b) => new Date(a.round_date) - new Date(b.round_date))
+    .slice(-12);
+
+  if (rounds.length < 2) {
+    empty.style.display = "block";
+    canvas.style.display = "none";
+    hint.textContent = "라운드를 2회 이상 인증하면 성장 그래프가 그려져요.";
+    return;
+  }
+
+  empty.style.display = "none";
+  canvas.style.display = "";
+
+  const toPar = rounds.map((r) => r.total_score - r.par);
+  const best = Math.min(...toPar);
+  const first = toPar[0];
+  const last = toPar[toPar.length - 1];
+  const delta = first - last; // 양수면 개선
+
+  hint.textContent =
+    delta > 0
+      ? `첫 기록 대비 ${delta.toFixed(0)}타 좋아졌어요! 베스트 +${best} 🎉`
+      : delta < 0
+        ? `첫 기록 대비 ${Math.abs(delta).toFixed(0)}타 늘었어요. 베스트 +${best} — 다시 달려봐요 💪`
+        : `기복 없이 유지 중이에요. 베스트 +${best}`;
+
+  const t = chartTheme();
+  const el = resetCanvas("scoreTrendChart");
+
+  window.__trendChart = new Chart(el, {
+    type: "line",
+    data: {
+      labels: rounds.map((r) => JoyGolf.formatDate(r.round_date)),
+      datasets: [
+        {
+          label: "파 대비 타수",
+          data: toPar,
+          borderColor: t.line,
+          backgroundColor: t.fill,
+          borderWidth: 2.5,
+          fill: true,
+          tension: 0.35,
+          pointBackgroundColor: "#a3e635",
+          pointBorderColor: t.pointBorder,
+          pointBorderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 900, easing: "easeOutQuart" },
+      interaction: { intersect: false, mode: "index" },
+      scales: {
+        y: {
+          // 타수는 낮을수록 좋으니 위로 갈수록 좋아지도록 뒤집는다
+          reverse: true,
+          grid: { color: t.gridColor },
+          border: { display: false },
+          ticks: {
+            color: t.labelColor,
+            font: { size: 11 },
+            callback: (v) => (v > 0 ? `+${v}` : v),
+          },
+        },
+        x: {
+          grid: { display: false },
+          border: { display: false },
+          ticks: { color: t.labelColor, font: { size: 11 }, maxRotation: 0, autoSkipPadding: 12 },
+        },
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const r = rounds[ctx.dataIndex];
+              const d = ctx.parsed.y;
+              return `${r.total_score}타 (${d > 0 ? "+" + d : d})${r.course_name ? " · " + r.course_name : ""}`;
+            },
+          },
+        },
+      },
+    },
+  });
+}
+
 async function renderRadar(userId) {
   const [{ data: radarRows }, { data: practiceRows }] = await Promise.all([
     sb.from("user_radar_raw").select("*"),
@@ -200,16 +322,8 @@ async function renderRadar(userId) {
     ? "공개 프로필 회원들과 비교한 상대적 위치예요 (본인 데이터만 비교에 사용)."
     : "아직 인증 기록이 없어요. 연습/스코어 인증을 등록하면 육각형이 채워져요!";
 
-  const isDark = window.JoyTheme && JoyTheme.current() === "dark";
-  const gridColor = isDark ? "rgba(255, 255, 255, 0.09)" : "rgba(6, 46, 34, 0.09)";
-  const labelColor = isDark ? "#b9cbc1" : "#33473d";
-
-  const canvas = document.getElementById("radarChart");
-
-  // 테마 전환 시 같은 캔버스에 다시 그리려면 기존 인스턴스를 먼저 정리해야 한다
-  const existing =
-    typeof Chart.getChart === "function" ? Chart.getChart(canvas) : window.__radarChart;
-  if (existing && typeof existing.destroy === "function") existing.destroy();
+  const { isDark, gridColor, labelColor } = chartTheme();
+  const canvas = resetCanvas("radarChart");
 
   window.__radarChart = new Chart(canvas, {
     type: "radar",
@@ -232,6 +346,7 @@ async function renderRadar(userId) {
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       animation: { duration: 900, easing: "easeOutQuart" },
       scales: {
         r: {
