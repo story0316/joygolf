@@ -15,7 +15,7 @@ let currentUserId = null;
   document.getElementById("awardVisibleSelect").value = String(profile.award_visible ?? true);
   await initPushSettings();
   JoyGolf.revealCards();
-})();
+})().catch((err) => JoyGolf.fatal(err));
 
 /* ---------------- 알림 설정 ---------------- */
 

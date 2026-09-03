@@ -8,17 +8,33 @@
   document.getElementById("welcomeMsg").textContent =
     `${profile.display_name}님, 오늘도 조이골프와 함께 성장해봐요 🐣`;
 
-  const [{ data: practiceLogs }, { data: scoreLogs }, { data: meetups }] = await Promise.all([
+  const [practiceRes, scoreRes, meetupRes] = await Promise.all([
     sb.from("practice_logs").select("*").eq("user_id", user.id).order("practice_date", { ascending: false }),
     sb.from("score_logs").select("*").eq("user_id", user.id).order("round_date", { ascending: false }),
     sb.from("meetups").select("*").gte("meetup_date", new Date().toISOString()).order("meetup_date").limit(3),
   ]);
 
+  // 연습/스코어는 레벨·배지·차트 전부의 입력이라, 실패했는데 0으로 그리면
+  // "기록이 다 날아갔다"로 보인다. 이건 페이지 단위 오류로 올린다.
+  if (practiceRes.error) throw new Error("연습 기록을 불러오지 못했어요: " + practiceRes.error.message);
+  if (scoreRes.error) throw new Error("스코어 기록을 불러오지 못했어요: " + scoreRes.error.message);
+
+  const practiceLogs = practiceRes.data;
+  const scoreLogs = scoreRes.data;
+  // 모임은 대시보드의 곁가지라, 실패해도 나머지는 보여주고 그 카드에만 표시한다
+  const meetups = meetupRes.error ? null : meetupRes.data;
+  if (meetupRes.error) {
+    document.getElementById("meetupEmpty").style.display = "none";
+    document.getElementById("upcomingMeetups").innerHTML =
+      JoyGolf.errorState("모임을 불러오지 못했어요", meetupRes.error);
+  }
+
   renderLevel(practiceLogs || [], scoreLogs || []);
   renderStatTiles(practiceLogs || [], scoreLogs || []);
   renderBadges(practiceLogs || [], scoreLogs || []);
   renderRecentActivity(practiceLogs || [], scoreLogs || []);
-  renderUpcomingMeetups(meetups || []);
+  // 모임 조회가 실패한 경우엔 위에서 이미 오류를 그려놨으니 덮어쓰지 않는다
+  if (meetups) renderUpcomingMeetups(meetups);
   renderScoreTrend(scoreLogs || []);
   await renderRadar(user.id);
 
@@ -29,7 +45,7 @@
     renderScoreTrend(scoreLogs || []);
     renderRadar(user.id);
   });
-})();
+})().catch((err) => JoyGolf.fatal(err));
 
 function renderLevel(practiceLogs, scoreLogs) {
   const totalBalls = practiceLogs.reduce((s, p) => s + p.ball_count, 0);

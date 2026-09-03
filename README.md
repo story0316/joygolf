@@ -169,10 +169,26 @@ $$);
 
 ### 7. 배포
 
-정적 파일 그대로 Vercel / Netlify / GitHub Pages 등에 올리면 됩니다. 별도 빌드 커맨드가 필요 없습니다 (Output Directory: 프로젝트 루트).
+정적 파일 그대로 Vercel / Netlify / GitHub Pages 등에 올리면 됩니다. 빌드 커맨드가 없습니다 (Output/Publish Directory: 프로젝트 루트).
+`vercel.json`과 `netlify.toml`에 헤더 설정이 들어 있어 별도 작업 없이 적용됩니다.
 
-> PWA(설치·오프라인·푸시)는 **HTTPS에서만** 동작합니다. 위 호스팅들은 기본적으로 HTTPS라 그대로 사용하면 되고, 로컬 테스트는 `localhost`가 예외로 허용됩니다.
-> 앱을 새로 배포하면 서비스워커가 변경을 감지해 "새 버전이 있어요" 칩을 띄웁니다. 캐시 구성을 바꿨다면 `sw.js`의 `VERSION` 값을 올려주세요.
+**설정된 헤더가 하는 일**
+
+| 대상 | 설정 | 이유 |
+|---|---|---|
+| `sw.js` | `max-age=0, must-revalidate` | **캐시되면 새 버전을 영영 못 받습니다.** 배포해도 반영이 안 되는 대표적 함정 |
+| `*.html` / `js` / `css` / manifest | `max-age=0, must-revalidate` | 빌드 단계가 없어 파일명에 해시가 없으므로, 길게 캐시하면 업데이트가 안 보입니다 |
+| `icons/*` | `max-age=1년, immutable` | 아이콘은 내용이 바뀌지 않습니다 |
+| 전역 | CSP, `nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy` | 기본 보안 |
+
+**CSP 관련 주의 2가지**
+
+1. `connect-src`가 `https://*.supabase.co`로 되어 있습니다. Supabase에 **커스텀 도메인**을 쓴다면 그 도메인을 추가하세요. 안 그러면 모든 API 호출이 차단됩니다.
+2. `script-src`에 `'unsafe-inline'`이 들어 있습니다. 테마 초기화 인라인 스크립트와 버튼의 `onclick` 핸들러 때문인데, 이걸 없애려면 이벤트 위임으로 리팩터링해야 합니다(추후 과제). 지금도 **스크립트 출처는 제한**되므로 외부 스크립트 주입은 막힙니다.
+
+> PWA(설치·오프라인·푸시)는 **HTTPS에서만** 동작합니다. 위 호스팅들은 기본 HTTPS라 그대로 되고, 로컬 테스트는 `localhost`가 예외로 허용됩니다.
+> GitHub Pages는 커스텀 헤더를 지원하지 않아 위 캐시 설정이 적용되지 않습니다. 서비스워커 업데이트가 늦게 반영될 수 있으니, 헤더 제어가 되는 호스팅을 권합니다.
+> 캐시 구성을 바꿨다면 `sw.js`의 `VERSION` 값을 올려주세요.
 
 ## 🧪 스키마 / RLS 테스트
 

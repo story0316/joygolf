@@ -8,7 +8,7 @@ let currentUserId = null;
   JoyGolf.renderNav("board", { isAdmin: profile.is_admin });
   await loadPosts();
   JoyGolf.revealCards();
-})();
+})().catch((err) => JoyGolf.fatal(err));
 
 document.getElementById("postForm").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -41,7 +41,12 @@ async function loadPosts() {
   const { data: posts, error } = await sb.from("posts").select("*").order("created_at", { ascending: false }).limit(50);
   const el = document.getElementById("postList");
   const empty = document.getElementById("postEmpty");
-  if (error || !posts || !posts.length) {
+  if (error) {
+    empty.style.display = "none";
+    el.innerHTML = JoyGolf.errorState("게시글을 불러오지 못했어요", error);
+    return;
+  }
+  if (!posts || !posts.length) {
     empty.style.display = "block";
     el.innerHTML = "";
     return;
@@ -57,6 +62,7 @@ async function loadPosts() {
 
   // 게시글 작성자뿐 아니라 댓글 작성자 프로필도 함께 조회해야 댓글에 "익명"이 뜨지 않음
   const userIds = [...new Set([...posts.map((p) => p.user_id), ...(comments || []).map((c) => c.user_id)])];
+  // 이름 표시용 보조 조회 — 실패해도 본문은 그대로 보여주고 이름만 대체 표기한다
   const { data: profiles } = await sb.from("profiles").select("id, display_name, avatar_emoji").in("id", userIds);
 
   const profileMap = Object.fromEntries((profiles || []).map((p) => [p.id, p]));

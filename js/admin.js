@@ -21,7 +21,7 @@ const SUSPICIOUS_SCORE_MAX = 200; // 이보다 높은 토탈 스코어도 오타
 
   await Promise.all([loadPracticeQueue(), loadScoreQueue()]);
   JoyGolf.revealCards();
-})();
+})().catch((err) => JoyGolf.fatal(err));
 
 async function loadPracticeQueue() {
   const { data: logs, error } = await sb
@@ -34,7 +34,13 @@ async function loadPracticeQueue() {
   const empty = document.getElementById("practiceEmpty");
   document.getElementById("practiceCount").textContent = logs?.length || 0;
 
-  if (error || !logs || !logs.length) {
+  // 운영진 화면에서 실패가 "대기열 비어있음"으로 보이면 승인이 밀린 걸 모르고 지나친다
+  if (error) {
+    empty.style.display = "none";
+    el.innerHTML = JoyGolf.errorState("연습 인증 대기열을 불러오지 못했어요", error);
+    return;
+  }
+  if (!logs || !logs.length) {
     empty.style.display = "block";
     el.innerHTML = "";
     return;
@@ -42,6 +48,7 @@ async function loadPracticeQueue() {
   empty.style.display = "none";
 
   const userIds = [...new Set(logs.map((l) => l.user_id))];
+  // 이름 표시용 보조 조회 — 실패해도 본문은 그대로 보여주고 이름만 대체 표기한다
   const { data: profiles } = await sb.from("profiles").select("id, display_name, avatar_emoji").in("id", userIds);
   const profileMap = Object.fromEntries((profiles || []).map((p) => [p.id, p]));
 
@@ -77,7 +84,12 @@ async function loadScoreQueue() {
   const empty = document.getElementById("scoreEmpty");
   document.getElementById("scoreCount").textContent = logs?.length || 0;
 
-  if (error || !logs || !logs.length) {
+  if (error) {
+    empty.style.display = "none";
+    el.innerHTML = JoyGolf.errorState("스코어 인증 대기열을 불러오지 못했어요", error);
+    return;
+  }
+  if (!logs || !logs.length) {
     empty.style.display = "block";
     el.innerHTML = "";
     return;
@@ -85,6 +97,7 @@ async function loadScoreQueue() {
   empty.style.display = "none";
 
   const userIds = [...new Set(logs.map((l) => l.user_id))];
+  // 이름 표시용 보조 조회 — 실패해도 본문은 그대로 보여주고 이름만 대체 표기한다
   const { data: profiles } = await sb.from("profiles").select("id, display_name, avatar_emoji").in("id", userIds);
   const profileMap = Object.fromEntries((profiles || []).map((p) => [p.id, p]));
 

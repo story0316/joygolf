@@ -14,7 +14,7 @@ const typeLabel = { round: "⛳ 라운딩", practice: "🏋️ 연습", etc: "�
 
   await loadList();
   JoyGolf.revealCards();
-})();
+})().catch((err) => JoyGolf.fatal(err));
 
 document.getElementById("meetupForm").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -59,7 +59,12 @@ async function loadList() {
 
   const el = document.getElementById("meetupList");
   const empty = document.getElementById("meetupEmpty");
-  if (error || !meetups || !meetups.length) {
+  if (error) {
+    empty.style.display = "none";
+    el.innerHTML = JoyGolf.errorState("모임 목록을 불러오지 못했어요", error);
+    return;
+  }
+  if (!meetups || !meetups.length) {
     empty.style.display = "block";
     el.innerHTML = "";
     return;

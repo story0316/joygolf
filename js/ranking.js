@@ -55,4 +55,4 @@ const medals = ["🥇", "🥈", "🥉"];
     .join("");
 
   JoyGolf.revealCards();
-})();
+})().catch((err) => JoyGolf.fatal(err));
