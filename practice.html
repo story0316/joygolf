@@ -2,56 +2,95 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#080d0b" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#f4f8f5" media="(prefers-color-scheme: light)" />
   <title>연습인증 | JoyGolf</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E⛳%3C/text%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
   <link rel="stylesheet" href="css/style.css" />
+  <script>
+    // 테마를 페인트 전에 확정해 깜빡임(FOUC)을 막는다.
+    (function () {
+      var t = "dark";
+      try {
+        t = localStorage.getItem("joygolf-theme") ||
+          (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+      } catch (e) {}
+      document.documentElement.setAttribute("data-theme", t);
+    })();
+  </script>
 </head>
 <body>
   <div id="navbar"></div>
 
-  <div class="container">
-    <h1 class="page-title">🏋️ 연습 인증</h1>
-    <p class="subtitle">연습장 방문 기록을 남기고 육각형 역량과 레벨을 채워보세요.</p>
+  <main class="container">
+    <header class="page-head reveal">
+      <span class="eyebrow">🏋️ Practice</span>
+      <h1 class="page-title">연습 인증</h1>
+      <p class="subtitle">연습장 방문 기록을 남기고 육각형 역량과 레벨을 채워보세요.</p>
+    </header>
 
-    <div class="card">
-      <h3>새 연습 인증 등록</h3>
-      <form id="practiceForm">
-        <div class="form-row">
-          <div>
-            <label for="practiceDate">연습 날짜</label>
-            <input type="date" id="practiceDate" required />
-          </div>
-          <div>
-            <label for="ballCount">연습공 개수</label>
-            <input type="number" id="ballCount" min="1" required placeholder="예: 100" />
-          </div>
+    <div class="bento">
+      <section class="card col-5 reveal">
+        <div class="card-head">
+          <span class="card-icon">✍️</span>
+          <h3 class="flex-1">새 연습 인증</h3>
         </div>
-        <label for="location">연습장 이름 (선택)</label>
-        <input type="text" id="location" placeholder="예: OO스크린골프" />
 
-        <label for="note">한 줄 메모 (선택)</label>
-        <input type="text" id="note" placeholder="오늘 드라이버 감이 좋았다 등" />
+        <form id="practiceForm">
+          <div class="form-row">
+            <div class="field">
+              <label for="practiceDate">연습 날짜</label>
+              <input type="date" id="practiceDate" required />
+            </div>
+            <div class="field">
+              <label for="ballCount">연습공 개수</label>
+              <input type="number" id="ballCount" min="1" required placeholder="예: 100" />
+            </div>
+          </div>
 
-        <label for="photo">인증샷 (연습장 계기판/영수증 등)</label>
-        <input type="file" id="photo" accept="image/*" />
-        <p class="hint">사진을 첨부하면 운영진 검증 후 인증뱃지가 붙어요.</p>
+          <div class="field">
+            <label for="location">연습장 이름 <span class="hint" style="display:inline">(선택)</span></label>
+            <input type="text" id="location" placeholder="예: OO스크린골프" />
+          </div>
 
-        <button type="submit" class="btn" id="submitBtn" style="margin-top: 16px;">✅ 인증 등록</button>
-      </form>
+          <div class="field">
+            <label for="note">한 줄 메모 <span class="hint" style="display:inline">(선택)</span></label>
+            <input type="text" id="note" placeholder="오늘 드라이버 감이 좋았다" />
+          </div>
+
+          <div class="field">
+            <label for="photo">인증샷</label>
+            <input type="file" id="photo" accept="image/*" />
+            <p class="hint">연습장 계기판·영수증 사진을 첨부하면 운영진 검증 후 인증 배지가 붙어요.</p>
+          </div>
+
+          <button type="submit" class="btn btn-block mt-16" id="submitBtn">✅ 인증 등록</button>
+        </form>
+      </section>
+
+      <section class="card col-7 reveal">
+        <div class="card-head">
+          <span class="card-icon">📒</span>
+          <h3 class="flex-1">내 연습 기록</h3>
+          <span class="badge badge-gray" id="practiceTotal">0건</span>
+        </div>
+        <div id="practiceList"></div>
+        <p class="empty-state" id="practiceEmpty" hidden>
+          <span class="emoji">🏌️</span>아직 등록된 연습 기록이 없어요.<br />왼쪽에서 첫 인증을 남겨보세요!
+        </p>
+      </section>
     </div>
+  </main>
 
-    <div class="card">
-      <h3>내 연습 기록</h3>
-      <div id="practiceList"></div>
-      <p class="empty-state" id="practiceEmpty" style="display:none;">아직 등록된 연습 기록이 없어요.</p>
-    </div>
-  </div>
-
-  <div id="toast"></div>
+  <div id="toast" role="status" aria-live="polite"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="js/config.js"></script>
   <script src="js/supabaseClient.js"></script>
+  <script src="js/theme.js"></script>
   <script src="js/nav.js"></script>
   <script src="js/practice.js"></script>
 </body>

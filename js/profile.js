@@ -17,13 +17,15 @@ let currentUserId = null;
 
 document.getElementById("profileForm").addEventListener("submit", async (e) => {
   e.preventDefault();
+  const handicap = document.getElementById("handicap").value;
+
   const { error } = await sb
     .from("profiles")
     .update({
       display_name: document.getElementById("displayName").value,
       avatar_emoji: document.getElementById("avatarEmoji").value || "🏌️",
       department: document.getElementById("department").value || null,
-      handicap: document.getElementById("handicap").value ? Number(document.getElementById("handicap").value) : null,
+      handicap: handicap === "" ? null : Number(handicap),
     })
     .eq("id", currentUserId);
 

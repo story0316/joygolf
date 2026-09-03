@@ -3,6 +3,8 @@ let mode = "login"; // 'login' | 'signup'
 const tabLogin = document.getElementById("tabLogin");
 const tabSignup = document.getElementById("tabSignup");
 const nameField = document.getElementById("nameField");
+const displayNameInput = document.getElementById("displayName");
+const passwordInput = document.getElementById("password");
 const submitBtn = document.getElementById("submitBtn");
 const formHint = document.getElementById("formHint");
 const form = document.getElementById("authForm");
@@ -10,10 +12,16 @@ const form = document.getElementById("authForm");
 function setMode(next) {
   mode = next;
   const isSignup = mode === "signup";
+
   tabLogin.classList.toggle("active", !isSignup);
   tabSignup.classList.toggle("active", isSignup);
-  nameField.style.display = isSignup ? "block" : "none";
-  document.getElementById("displayName").required = isSignup;
+  tabLogin.setAttribute("aria-selected", String(!isSignup));
+  tabSignup.setAttribute("aria-selected", String(isSignup));
+
+  nameField.hidden = !isSignup;
+  displayNameInput.required = isSignup;
+  passwordInput.autocomplete = isSignup ? "new-password" : "current-password";
+
   submitBtn.textContent = isSignup ? "회원가입" : "로그인";
   formHint.textContent = "";
 }
@@ -24,8 +32,8 @@ tabSignup.addEventListener("click", () => setMode("signup"));
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
   const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value;
-  const displayName = document.getElementById("displayName").value.trim();
+  const password = passwordInput.value;
+  const displayName = displayNameInput.value.trim();
 
   const allowedDomain = window.APP_CONFIG.ALLOWED_EMAIL_DOMAIN;
   if (allowedDomain && !email.toLowerCase().endsWith("@" + allowedDomain.toLowerCase())) {
@@ -34,6 +42,7 @@ form.addEventListener("submit", async (e) => {
   }
 
   submitBtn.disabled = true;
+  submitBtn.textContent = mode === "signup" ? "가입 중…" : "로그인 중…";
   formHint.textContent = "";
 
   try {
@@ -50,27 +59,30 @@ form.addEventListener("submit", async (e) => {
           });
           window.location.href = "dashboard.html";
           return;
-        } else {
-          formHint.textContent = "📩 가입 확인 이메일을 보냈어요. 메일함을 확인해주세요!";
-          setMode("login");
         }
+        formHint.textContent = "📩 가입 확인 이메일을 보냈어요. 메일함을 확인해주세요!";
+        setMode("login");
       }
     } else {
       const { data, error } = await sb.auth.signInWithPassword({ email, password });
       if (error) throw error;
       if (data.session) {
         window.location.href = "dashboard.html";
+        return;
       }
     }
   } catch (err) {
     formHint.textContent = "⚠️ " + (err.message || "오류가 발생했어요. 다시 시도해주세요.");
   } finally {
     submitBtn.disabled = false;
+    submitBtn.textContent = mode === "signup" ? "회원가입" : "로그인";
   }
 });
 
 // 이미 로그인된 상태면 바로 대시보드로
 (async () => {
-  const { data: { session } } = await sb.auth.getSession();
+  const {
+    data: { session },
+  } = await sb.auth.getSession();
   if (session) window.location.href = "dashboard.html";
 })();

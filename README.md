@@ -15,6 +15,7 @@
 - **후기 게시판**: 사진 첨부 후기, 좋아요, 댓글
 - **운영진 승인 페이지**: 미검증 연습/스코어 인증을 사진과 함께 검토해 승인/반려, 이상치(과도한 연습공 수·비정상 스코어) 자동 플래깅
 - **가입 이메일 도메인 제한**: DB 트리거로 서버단에서 강제 (프론트엔드 체크만으로는 API 직접 호출을 막을 수 없기 때문)
+- **다크/라이트 테마**: 시스템 설정을 따라가되 직접 전환 가능하며 선택은 브라우저에 저장됨
 
 ## 🗂 구조
 
@@ -28,10 +29,11 @@ board.html         후기 게시판
 ranking.html       이달의 상
 profile.html       프로필 & 공개 설정
 admin.html         운영진 승인 대기열 (is_admin 회원만 접근)
-css/style.css      공통 스타일
+css/style.css      디자인 시스템 (토큰 · 컴포넌트 · 다크/라이트 테마)
 js/config.js        Supabase 프로젝트 설정 (직접 채워야 함)
 js/supabaseClient.js Supabase 클라이언트 + 공통 유틸
-js/nav.js           공통 상단 네비게이션
+js/theme.js         다크/라이트 테마 전환
+js/nav.js           공통 네비게이션 (상단 바 + 모바일 하단 탭바)
 js/*.js             페이지별 로직
 sql/schema.sql       Supabase DB 스키마 (테이블/RLS/이달의상 함수)
 ```
@@ -97,6 +99,24 @@ update public.app_settings set value = 'yourcompany.com' where key = 'allowed_em
 ### 6. 배포
 
 정적 파일 그대로 Vercel / Netlify / GitHub Pages 등에 올리면 됩니다. 별도 빌드 커맨드가 필요 없습니다 (Output Directory: 프로젝트 루트).
+
+## 🎨 디자인 시스템
+
+`css/style.css` 하나에 토큰과 컴포넌트가 모두 정의돼 있고, 빌드 단계는 없습니다.
+
+- **테마**: 다크가 기본이며 `:root`에 다크 토큰, `:root[data-theme="light"]`에 라이트 토큰을 둡니다.
+  첫 방문자는 OS의 `prefers-color-scheme`을 따르고, 한 번 전환하면 `localStorage`(`joygolf-theme`)에 저장됩니다.
+  각 페이지 `<head>`의 인라인 스크립트가 첫 페인트 전에 테마를 확정해 깜빡임(FOUC)이 없습니다.
+- **색**: 그린(`--accent`) 단일 강조색 + 앰버(`--amber`)를 보조로 씁니다. 색을 새로 쓸 일이 생기면
+  하드코딩하지 말고 토큰을 추가하세요 — 그래야 두 테마가 함께 따라옵니다.
+- **레이아웃**: 12칼럼 `.bento` 그리드(`.col-4` ~ `.col-12`)를 씁니다. 카드 높이는 내용에 맞춰지므로
+  (`align-items: start`) 짧은 카드 아래에 빈 공간이 생기지 않습니다.
+- **컴포넌트**: `.card` `.btn`(`-outline` `-ghost` `-amber` `-danger` `-sm`) `.badge` `.stat-tile`
+  `.list-item` `.empty-state` `.skeleton` 등이 준비돼 있습니다.
+- **모바일**: 860px 이하에서 상단 알약 메뉴가 하단 탭바 + "더보기" 바텀시트로 바뀝니다.
+- **접근성**: `prefers-reduced-motion`을 존중하고, 표시/숨김은 인라인 `style` 대신 `hidden` 속성으로 다룹니다.
+
+차트 색도 `JoyGolf.cssVar()`로 같은 토큰을 읽어가므로, 테마를 바꾸면 육각형 차트가 함께 다시 그려집니다.
 
 ## 🔒 공개/비공개 설계 메모
 

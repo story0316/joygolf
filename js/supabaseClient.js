@@ -65,9 +65,37 @@ JoyGolf.escapeHtml = function escapeHtml(str) {
     .replace(/'/g, "&#39;");
 };
 
+// 'YYYY-MM-DD' (로컬 타임존 기준).
+// toISOString()은 UTC라 KST 새벽에는 하루 전 날짜가 나와, 연속 기록 계산이 어긋난다.
+JoyGolf.toLocalDateKey = function toLocalDateKey(d) {
+  const date = d instanceof Date ? d : new Date(d);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+};
+
 JoyGolf.formatDate = function formatDate(d) {
   const date = new Date(d);
+  const today = JoyGolf.toLocalDateKey(new Date());
+  const key = JoyGolf.toLocalDateKey(date);
+  if (key === today) return "오늘";
+
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (key === JoyGolf.toLocalDateKey(yesterday)) return "어제";
+
   return `${date.getMonth() + 1}월 ${date.getDate()}일`;
+};
+
+// 로딩 중 자리를 잡아주는 스켈레톤 (레이아웃 흔들림 방지)
+JoyGolf.skeleton = function skeleton(rows) {
+  return Array.from({ length: rows || 3 })
+    .map(
+      () => `<div class="list-item">
+        <div class="skeleton skeleton-line" style="width:62%"></div>
+        <div class="skeleton skeleton-line short mb-0"></div>
+      </div>`
+    )
+    .join("");
 };
 
 JoyGolf.showToast = function showToast(msg) {

@@ -2,70 +2,108 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#080d0b" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#f4f8f5" media="(prefers-color-scheme: light)" />
   <title>프로필 | JoyGolf</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E⛳%3C/text%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
   <link rel="stylesheet" href="css/style.css" />
+  <script>
+    // 테마를 페인트 전에 확정해 깜빡임(FOUC)을 막는다.
+    (function () {
+      var t = "dark";
+      try {
+        t = localStorage.getItem("joygolf-theme") ||
+          (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+      } catch (e) {}
+      document.documentElement.setAttribute("data-theme", t);
+    })();
+  </script>
 </head>
 <body>
   <div id="navbar"></div>
 
-  <div class="container">
-    <h1 class="page-title">⚙️ 내 프로필 &amp; 공개 설정</h1>
+  <main class="container">
+    <header class="page-head reveal">
+      <span class="eyebrow">⚙️ Settings</span>
+      <h1 class="page-title">프로필 &amp; 공개 설정</h1>
+      <p class="subtitle">동호회에서 보여질 내 모습과, 기록 공개 범위를 직접 정할 수 있어요.</p>
+    </header>
 
-    <div class="card">
-      <h3>기본 정보</h3>
-      <form id="profileForm">
-        <div class="form-row">
-          <div>
-            <label for="displayName">닉네임</label>
-            <input type="text" id="displayName" required />
+    <div class="bento">
+      <section class="card col-6 reveal">
+        <div class="card-head">
+          <span class="card-icon">🪪</span>
+          <h3 class="flex-1">기본 정보</h3>
+        </div>
+
+        <form id="profileForm">
+          <div class="form-row">
+            <div class="field">
+              <label for="displayName">닉네임</label>
+              <input type="text" id="displayName" required />
+            </div>
+            <div class="field">
+              <label for="avatarEmoji">아바타 이모지</label>
+              <input type="text" id="avatarEmoji" maxlength="2" />
+            </div>
           </div>
-          <div>
-            <label for="avatarEmoji">아바타 이모지</label>
-            <input type="text" id="avatarEmoji" maxlength="2" />
+
+          <div class="form-row">
+            <div class="field">
+              <label for="department">부서 / 팀 <span class="hint" style="display:inline">(선택)</span></label>
+              <input type="text" id="department" />
+            </div>
+            <div class="field">
+              <label for="handicap">핸디캡 <span class="hint" style="display:inline">(선택)</span></label>
+              <input type="number" id="handicap" step="0.1" />
+            </div>
+          </div>
+
+          <button type="submit" class="btn mt-16">저장하기</button>
+        </form>
+      </section>
+
+      <section class="card col-6 reveal">
+        <div class="card-head">
+          <span class="card-icon">🔒</span>
+          <div class="flex-1">
+            <h3>공개 설정</h3>
+            <p class="hint">두 설정은 서로 독립적으로 동작해요.</p>
           </div>
         </div>
-        <div class="form-row">
-          <div>
-            <label for="department">부서/팀 (선택)</label>
-            <input type="text" id="department" />
-          </div>
-          <div>
-            <label for="handicap">핸디캡 (선택)</label>
-            <input type="number" id="handicap" step="0.1" />
-          </div>
+
+        <div class="field">
+          <label for="visibilitySelect">1. 내 상세 기록 공개 범위</label>
+          <select id="visibilitySelect">
+            <option value="public">🌍 전체 공개 — 다른 회원이 내 기록을 볼 수 있어요</option>
+            <option value="private">🔒 비공개 — 나만 볼 수 있어요</option>
+          </select>
+          <p class="hint">육각형 차트와 연습·스코어 인증 내역이 대상이에요. 비공개여도 랭킹 집계에는 익명으로 반영돼요.</p>
         </div>
-        <button type="submit" class="btn" style="margin-top: 14px;">저장</button>
-      </form>
+
+        <div class="field">
+          <label for="awardVisibleSelect">2. 이달의 상 닉네임 노출</label>
+          <select id="awardVisibleSelect">
+            <option value="true">✅ 동의 — 수상 시 닉네임이 표시돼요</option>
+            <option value="false">🙈 비동의 — "이름 없는 회원"으로 표시돼요</option>
+          </select>
+          <p class="hint">기록은 비공개로 두고 상만 받고 싶다면, 1번은 비공개 / 2번은 동의로 설정하세요.</p>
+        </div>
+
+        <button id="savePrivacyBtn" class="btn btn-outline mt-16">공개 설정 저장</button>
+      </section>
     </div>
+  </main>
 
-    <div class="card">
-      <h3>🔒 공개 설정</h3>
-      <p class="hint">두 가지 설정은 서로 독립적으로 동작해요.</p>
-
-      <label style="margin-top: 16px;">1. 내 상세 기록(육각형 차트, 연습/스코어 인증 내역) 공개 범위</label>
-      <select id="visibilitySelect">
-        <option value="public">전체 공개 — 다른 회원이 내 기록을 볼 수 있어요</option>
-        <option value="private">비공개 — 나만 볼 수 있어요</option>
-      </select>
-      <p class="hint">비공개로 설정해도 전체 통계(랭킹 계산)에는 익명으로 반영돼요.</p>
-
-      <label style="margin-top: 20px;">2. 이달의 상 발표에 닉네임 노출 동의</label>
-      <select id="awardVisibleSelect">
-        <option value="true">동의 — 이달의 상 수상 시 닉네임이 표시돼요</option>
-        <option value="false">비동의 — "이름 없는 회원"으로 표시돼요</option>
-      </select>
-      <p class="hint">기록은 비공개로 하고, 이달의 상만 받고 싶은 경우 1번은 비공개 / 2번은 동의로 설정하세요.</p>
-
-      <button id="savePrivacyBtn" class="btn btn-outline" style="margin-top: 16px;">공개 설정 저장</button>
-    </div>
-  </div>
-
-  <div id="toast"></div>
+  <div id="toast" role="status" aria-live="polite"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="js/config.js"></script>
   <script src="js/supabaseClient.js"></script>
+  <script src="js/theme.js"></script>
   <script src="js/nav.js"></script>
   <script src="js/profile.js"></script>
 </body>
