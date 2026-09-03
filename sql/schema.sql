@@ -19,6 +19,8 @@ create table if not exists public.profiles (
   profile_visibility text not null default 'private' check (profile_visibility in ('public', 'private')),
   -- 랭킹/이달의 상 발표에 실명(닉네임) 노출 동의 여부 (프로필이 비공개여도 별도로 켤 수 있음)
   award_visible boolean not null default true,
+  -- 운영진 여부: 연습/스코어 인증 승인 페이지 접근 권한. 아래 protect_is_admin 트리거로 셀프 승격을 막음
+  is_admin boolean not null default false,
   created_at timestamptz not null default now()
 );
 
@@ -38,6 +40,45 @@ create policy "profiles: 본인만 수정"
   on public.profiles for update
   to authenticated
   using (auth.uid() = id);
+
+-- is_admin은 API를 통한 셀프 승격을 막는다: 인증된 사용자(auth.uid()가 있는 요청)가
+-- is_admin 값을 바꾸려면 "현재 이미 관리자인 사람"이어야 한다.
+-- auth.uid()가 없는 컨텍스트(SQL Editor에서 첫 관리자 지정)는 막지 않는다.
+create or replace function public.protect_is_admin()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if new.is_admin is distinct from old.is_admin then
+    if auth.uid() is not null and not exists (
+      select 1 from public.profiles p where p.id = auth.uid() and p.is_admin = true
+    ) then
+      new.is_admin := old.is_admin;
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists protect_is_admin_trigger on public.profiles;
+create trigger protect_is_admin_trigger
+  before update on public.profiles
+  for each row execute function public.protect_is_admin();
+
+-- 정책에서 반복 사용할 관리자 판별 헬퍼
+create or replace function public.is_admin()
+returns boolean
+language sql
+security definer
+stable
+set search_path = public
+as $$
+  select coalesce((select p.is_admin from public.profiles p where p.id = auth.uid()), false);
+$$;
+
+grant execute on function public.is_admin() to authenticated;
 
 -- ============================================================
 -- 2. practice_logs : 연습 인증 (연습공 수)
@@ -81,6 +122,19 @@ create policy "practice_logs: 본인만 삭제 (미검증 상태만)"
   on public.practice_logs for delete
   to authenticated
   using (user_id = auth.uid() and verified = false);
+
+-- 운영진 승인 페이지용: 관리자는 공개설정과 무관하게 전체 열람/검증(승인)/반려(삭제) 가능
+create policy "practice_logs: 관리자 전체 열람"
+  on public.practice_logs for select to authenticated
+  using (public.is_admin());
+
+create policy "practice_logs: 관리자 검증 처리"
+  on public.practice_logs for update to authenticated
+  using (public.is_admin());
+
+create policy "practice_logs: 관리자 반려 삭제"
+  on public.practice_logs for delete to authenticated
+  using (public.is_admin());
 
 -- ============================================================
 -- 3. score_logs : 라운드 스코어 인증 (골프존/필드 스코어카드)
@@ -130,6 +184,19 @@ create policy "score_logs: 본인만 삭제 (미검증 상태만)"
   on public.score_logs for delete
   to authenticated
   using (user_id = auth.uid() and verified = false);
+
+-- 운영진 승인 페이지용: 관리자는 공개설정과 무관하게 전체 열람/검증(승인)/반려(삭제) 가능
+create policy "score_logs: 관리자 전체 열람"
+  on public.score_logs for select to authenticated
+  using (public.is_admin());
+
+create policy "score_logs: 관리자 검증 처리"
+  on public.score_logs for update to authenticated
+  using (public.is_admin());
+
+create policy "score_logs: 관리자 반려 삭제"
+  on public.score_logs for delete to authenticated
+  using (public.is_admin());
 
 -- ============================================================
 -- 4. meetups : 라운딩/연습 모임 약속
@@ -258,7 +325,49 @@ create policy "proof-photos: 본인 파일만 삭제"
   using (bucket_id = 'proof-photos' and owner = auth.uid());
 
 -- ============================================================
--- 7. 육각형 역량 원자료 뷰 (본인/공개 프로필만 RLS로 필터링됨)
+-- 7. app_settings + 가입 이메일 도메인 서버단 검증
+--    (js/config.js의 ALLOWED_EMAIL_DOMAIN은 UX용 프론트 체크일 뿐이라 API를 직접
+--     호출하면 우회 가능함 -> auth.users 가입 트리거에서 실제로 강제한다)
+-- ============================================================
+create table if not exists public.app_settings (
+  key text primary key,
+  value text
+);
+
+alter table public.app_settings enable row level security;
+-- 정책을 하나도 두지 않아 PostgREST(anon/authenticated 키)로는 조회/수정 모두 막히고,
+-- SQL Editor(관리자)와 security definer 함수에서만 접근 가능하다.
+
+insert into public.app_settings (key, value)
+values ('allowed_email_domain', '')
+on conflict (key) do nothing;
+-- 사내 이메일만 가입을 허용하려면 아래처럼 값을 채우세요 (빈 문자열이면 제한 없음):
+--   update public.app_settings set value = 'yourcompany.com' where key = 'allowed_email_domain';
+
+create or replace function public.enforce_email_domain()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  allowed text;
+begin
+  select value into allowed from public.app_settings where key = 'allowed_email_domain';
+  if allowed is not null and allowed <> '' and new.email not ilike ('%@' || allowed) then
+    raise exception 'signup_domain_not_allowed: only @% addresses may sign up', allowed;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists enforce_email_domain_trigger on auth.users;
+create trigger enforce_email_domain_trigger
+  before insert on auth.users
+  for each row execute function public.enforce_email_domain();
+
+-- ============================================================
+-- 8. 육각형 역량 원자료 뷰 (본인/공개 프로필만 RLS로 필터링됨)
 -- ============================================================
 create or replace view public.user_radar_raw
 with (security_invoker = true) as
@@ -287,7 +396,7 @@ from public.practice_logs p
 group by p.user_id;
 
 -- ============================================================
--- 8. 이달의 상 : SECURITY DEFINER 함수로 익명 처리하여 반환
+-- 9. 이달의 상 : SECURITY DEFINER 함수로 익명 처리하여 반환
 --    (프로필 비공개 회원도 집계엔 포함되지만, award_visible=false면 이름 대신 '이름 없는 회원')
 -- ============================================================
 create or replace function public.get_monthly_awards()

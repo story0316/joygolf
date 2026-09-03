@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>운영진 승인 | JoyGolf</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="navbar"></div>
+
+  <div class="container">
+    <h1 class="page-title">🛡️ 운영진 승인 대기열</h1>
+    <p class="subtitle">연습/스코어 인증 사진을 확인하고 승인 또는 반려하세요.</p>
+
+    <div id="notAdmin" class="card empty-state" style="display:none;">
+      🙅 운영진만 접근할 수 있는 페이지예요.
+    </div>
+
+    <div id="adminContent" style="display:none;">
+      <div class="card">
+        <h3>🏋️ 연습 인증 대기 (<span id="practiceCount">0</span>)</h3>
+        <div id="practiceQueue"></div>
+        <p class="empty-state" id="practiceEmpty" style="display:none;">대기 중인 연습 인증이 없어요.</p>
+      </div>
+
+      <div class="card">
+        <h3>⛳ 스코어 인증 대기 (<span id="scoreCount">0</span>)</h3>
+        <div id="scoreQueue"></div>
+        <p class="empty-state" id="scoreEmpty" style="display:none;">대기 중인 스코어 인증이 없어요.</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/supabaseClient.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

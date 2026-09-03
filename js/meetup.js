@@ -5,8 +5,8 @@ const typeLabel = { round: "⛳ 라운딩", practice: "🏋️ 연습", etc: "�
   const session = await JoyGolf.requireSession();
   if (!session) return;
   currentUserId = session.user.id;
-  await JoyGolf.getOrCreateProfile(session.user);
-  JoyGolf.renderNav("meetup");
+  const profile = await JoyGolf.getOrCreateProfile(session.user);
+  JoyGolf.renderNav("meetup", { isAdmin: profile.is_admin });
 
   const d = new Date();
   d.setHours(d.getHours() + 3);

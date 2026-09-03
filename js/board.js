@@ -4,8 +4,8 @@ let currentUserId = null;
   const session = await JoyGolf.requireSession();
   if (!session) return;
   currentUserId = session.user.id;
-  await JoyGolf.getOrCreateProfile(session.user);
-  JoyGolf.renderNav("board");
+  const profile = await JoyGolf.getOrCreateProfile(session.user);
+  JoyGolf.renderNav("board", { isAdmin: profile.is_admin });
   await loadPosts();
 })();
 

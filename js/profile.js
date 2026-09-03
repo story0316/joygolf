@@ -5,7 +5,7 @@ let currentUserId = null;
   if (!session) return;
   currentUserId = session.user.id;
   const profile = await JoyGolf.getOrCreateProfile(session.user);
-  JoyGolf.renderNav("profile");
+  JoyGolf.renderNav("profile", { isAdmin: profile.is_admin });
 
   document.getElementById("displayName").value = profile.display_name || "";
   document.getElementById("avatarEmoji").value = profile.avatar_emoji || "🏌️";

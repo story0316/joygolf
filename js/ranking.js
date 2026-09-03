@@ -8,8 +8,8 @@ const medals = ["🥇", "🥈", "🥉"];
 (async function init() {
   const session = await JoyGolf.requireSession();
   if (!session) return;
-  await JoyGolf.getOrCreateProfile(session.user);
-  JoyGolf.renderNav("ranking");
+  const profile = await JoyGolf.getOrCreateProfile(session.user);
+  JoyGolf.renderNav("ranking", { isAdmin: profile.is_admin });
 
   const now = new Date();
   document.getElementById("monthLabel").textContent = `${now.getFullYear()}년 ${now.getMonth() + 1}월 시상`;

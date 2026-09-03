@@ -13,6 +13,8 @@
 - **이달의 상**: 연습왕(연습공 수) / 꾸준상(연습 일수) / 스코어 향상상(전월 대비 개선폭) — 비공개 회원도 익명으로 집계에 포함
 - **모임(약속) 만들기**: 라운딩/연습 모임 생성 + 참가(✋)/미정(🤔)/불참(✖) RSVP
 - **후기 게시판**: 사진 첨부 후기, 좋아요, 댓글
+- **운영진 승인 페이지**: 미검증 연습/스코어 인증을 사진과 함께 검토해 승인/반려, 이상치(과도한 연습공 수·비정상 스코어) 자동 플래깅
+- **가입 이메일 도메인 제한**: DB 트리거로 서버단에서 강제 (프론트엔드 체크만으로는 API 직접 호출을 막을 수 없기 때문)
 
 ## 🗂 구조
 
@@ -25,6 +27,7 @@ meetup.html        모임 만들기 / RSVP
 board.html         후기 게시판
 ranking.html       이달의 상
 profile.html       프로필 & 공개 설정
+admin.html         운영진 승인 대기열 (is_admin 회원만 접근)
 css/style.css      공통 스타일
 js/config.js        Supabase 프로젝트 설정 (직접 채워야 함)
 js/supabaseClient.js Supabase 클라이언트 + 공통 유틸
@@ -67,7 +70,31 @@ python3 -m http.server 8000
 # 브라우저에서 http://localhost:8000 접속
 ```
 
-### 4. 배포
+### 4. 첫 운영진(관리자) 지정
+
+가입 후 Supabase **SQL Editor**에서 아래 쿼리로 본인 계정을 관리자로 지정하세요. (이메일은 본인이 가입한 주소로 변경)
+
+```sql
+update public.profiles
+set is_admin = true
+where id = (select id from auth.users where email = 'admin@yourcompany.com');
+```
+
+관리자로 지정된 계정에는 상단 메뉴에 **🛡️ 운영진** 링크가 나타나고, `admin.html`에서 미검증 인증을 승인/반려할 수 있습니다.
+`is_admin`은 API로는 셀프 승격이 불가능하도록 DB 트리거(`protect_is_admin`)로 막혀 있어, 최초 지정은 반드시 SQL Editor에서 해야 합니다.
+
+### 5. 가입 이메일 도메인 제한 (선택)
+
+`js/config.js`의 `ALLOWED_EMAIL_DOMAIN`은 가입 폼에서 즉시 안내 문구를 보여주기 위한 프론트엔드 체크일 뿐이라, API를 직접 호출하면 우회될 수 있습니다.
+실제로 막으려면 SQL Editor에서 아래처럼 서버단 설정값을 채우세요 — `sql/schema.sql`에 포함된 `enforce_email_domain` 트리거가 가입 시점에 이 값으로 검증합니다.
+
+```sql
+update public.app_settings set value = 'yourcompany.com' where key = 'allowed_email_domain';
+```
+
+빈 문자열(`''`, 기본값)이면 제한 없이 모든 이메일로 가입할 수 있습니다.
+
+### 6. 배포
 
 정적 파일 그대로 Vercel / Netlify / GitHub Pages 등에 올리면 됩니다. 별도 빌드 커맨드가 필요 없습니다 (Output Directory: 프로젝트 루트).
 
@@ -80,6 +107,6 @@ python3 -m http.server 8000
 
 ## ⚠️ 알려진 제약 / TODO
 
-- 이 세션 환경에서는 npm 레지스트리 접근이 막혀 있어 로컬에서 실제 Supabase 프로젝트에 연결한 통합 테스트(회원가입/로그인/DB 연동)를 진행하지 못했습니다. Supabase 프로젝트를 연결한 뒤 직접 가입 → 인증 등록 → 랭킹 확인 흐름을 한 번 확인해주세요.
-- 인증(검증) 처리는 현재 수동입니다. `practice_logs.verified` / `score_logs.verified` 를 운영진이 Supabase 테이블 에디터에서 직접 체크하는 방식이며, 추후 운영진 전용 승인 페이지를 추가할 수 있습니다.
-- 사내 이메일 도메인 제한은 프론트엔드 체크만 되어 있습니다. 더 강하게 막으려면 Supabase Auth Hook(또는 이메일 도메인 allow-list)을 추가로 설정하세요.
+- 이 세션 환경에서는 npm 레지스트리 접근이 막혀 있어 로컬에서 실제 Supabase 프로젝트에 연결한 통합 테스트(회원가입/로그인/DB 연동)를 진행하지 못했습니다. Supabase 프로젝트를 연결한 뒤 직접 가입 → 인증 등록 → 운영진 승인 → 랭킹 확인 흐름을 한 번 확인해주세요.
+- `enforce_email_domain` 트리거는 `auth.users` 테이블에 `BEFORE INSERT` 트리거를 생성합니다. 대부분의 Supabase 프로젝트에서 SQL Editor로 정상 생성되지만, 만약 권한 오류가 나면 대신 Supabase 대시보드의 **Authentication > Hooks** 기능으로 동일한 검증 함수를 연결하세요.
+- 반려(운영진 승인 페이지의 "✖ 반려")는 현재 기록을 바로 삭제합니다. 반려 사유를 남기고 싶다면 `practice_logs`/`score_logs`에 `rejected_reason` 컬럼을 추가하는 방식으로 확장할 수 있습니다.

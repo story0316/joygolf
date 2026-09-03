@@ -4,7 +4,7 @@
   const user = session.user;
   const profile = await JoyGolf.getOrCreateProfile(user);
 
-  JoyGolf.renderNav("dashboard");
+  JoyGolf.renderNav("dashboard", { isAdmin: profile.is_admin });
   document.getElementById("welcomeMsg").textContent =
     `${profile.display_name}님, 오늘도 조이골프와 함께 성장해봐요 🐣`;
 

@@ -1,5 +1,5 @@
 // 공통 상단 네비게이션 렌더링
-JoyGolf.renderNav = function renderNav(activePage) {
+JoyGolf.renderNav = function renderNav(activePage, options) {
   const links = [
     { href: "dashboard.html", label: "🏠 대시보드", key: "dashboard" },
     { href: "practice.html", label: "🏋️ 연습인증", key: "practice" },
@@ -9,6 +9,10 @@ JoyGolf.renderNav = function renderNav(activePage) {
     { href: "ranking.html", label: "🏆 랭킹/이달의상", key: "ranking" },
     { href: "profile.html", label: "⚙️ 프로필", key: "profile" },
   ];
+
+  if (options && options.isAdmin) {
+    links.push({ href: "admin.html", label: "🛡️ 운영진", key: "admin" });
+  }
 
   const el = document.getElementById("navbar");
   if (!el) return;
