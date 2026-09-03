@@ -16,6 +16,8 @@
 - **운영진 승인 페이지**: 미검증 연습/스코어 인증을 사진과 함께 검토해 승인/반려, 이상치(과도한 연습공 수·비정상 스코어) 자동 플래깅
 - **가입 이메일 도메인 제한**: DB 트리거로 서버단에서 강제 (프론트엔드 체크만으로는 API 직접 호출을 막을 수 없기 때문)
 - **다크/라이트 테마**: 시스템 설정을 따르고, 상단바 버튼으로 수동 전환 (선택은 브라우저에 저장)
+- **PWA**: 홈 화면에 설치해서 앱처럼 사용, 오프라인에서도 이미 본 화면은 열림
+- **웹 푸시 알림**: 모임 하루 전 리마인더 등을 기기 알림으로 수신 (기기별로 켜고 끔)
 
 ## 🎨 디자인
 
@@ -39,13 +41,20 @@ board.html         후기 게시판
 ranking.html       이달의 상
 profile.html       프로필 & 공개 설정
 admin.html         운영진 승인 대기열 (is_admin 회원만 접근)
+offline.html       오프라인 안내 화면
+manifest.webmanifest  PWA 매니페스트 (설치 이름/아이콘/바로가기)
+sw.js              서비스워커 (앱 셸 캐시 + 푸시 수신)
+icons/             앱 아이콘 (icon.svg 가 원본, PNG 는 여기서 렌더)
 css/style.css      디자인 시스템 (테마 토큰 + 컴포넌트)
 js/config.js        Supabase 프로젝트 설정 (직접 채워야 함)
 js/theme.js         라이트/다크 테마 관리
 js/supabaseClient.js Supabase 클라이언트 + 공통 유틸
 js/nav.js           공통 네비게이션 (상단바 + 모바일 독)
+js/pwa.js           서비스워커 등록 / 설치·업데이트 안내
+js/push.js          웹 푸시 구독 관리
 js/*.js             페이지별 로직
 sql/schema.sql       Supabase DB 스키마 (테이블/RLS/이달의상 함수)
+supabase/functions/send-push/  푸시 발송 Edge Function (Deno)
 ```
 
 빌드 도구가 없으므로 `npm install` 없이 그대로 정적 호스팅(Vercel/Netlify/GitHub Pages/사내 웹서버 등)에 올리면 됩니다.
@@ -106,9 +115,63 @@ update public.app_settings set value = 'yourcompany.com' where key = 'allowed_em
 
 빈 문자열(`''`, 기본값)이면 제한 없이 모든 이메일로 가입할 수 있습니다.
 
-### 6. 배포
+### 6. 푸시 알림 설정 (선택)
+
+푸시는 브라우저가 아니라 **서버가 VAPID 개인키로 서명해서** 보내야 하므로, 정적 파일만으로는 완결되지 않습니다.
+발송 서버 역할은 `supabase/functions/send-push` Edge Function이 담당합니다.
+
+**1) VAPID 키 쌍 생성** (로컬에서 한 번만)
+
+```bash
+npx web-push generate-vapid-keys
+```
+
+**2) 공개키는 프론트에, 개인키는 서버 시크릿으로**
+
+```js
+// js/config.js — 공개키만! 개인키는 절대 넣지 마세요
+VAPID_PUBLIC_KEY: "BEl...공개키..."
+```
+
+```bash
+supabase secrets set \
+  VAPID_PUBLIC_KEY="BEl...공개키..." \
+  VAPID_PRIVATE_KEY="...개인키..." \
+  VAPID_SUBJECT="mailto:admin@yourcompany.com" \
+  PUSH_CRON_SECRET="$(openssl rand -hex 32)"
+
+supabase functions deploy send-push
+```
+
+**3) 모임 리마인더 자동 발송** — Supabase SQL Editor에서 `pg_cron` + `pg_net`으로 매시간 호출
+
+```sql
+create extension if not exists pg_cron;
+create extension if not exists pg_net;
+
+select cron.schedule('joygolf-meetup-reminder', '0 * * * *', $$
+  select net.http_post(
+    url     := 'https://YOUR-PROJECT-REF.supabase.co/functions/v1/send-push',
+    headers := jsonb_build_object(
+                 'Content-Type', 'application/json',
+                 'x-push-secret', 'PUSH_CRON_SECRET에 넣은 값'
+               ),
+    body    := '{"kind":"meetup_reminder"}'::jsonb
+  );
+$$);
+```
+
+이 함수는 **24~25시간 뒤에 시작하는 모임**의 참가(`going`) 인원에게 리마인더를 보내고, 만료된 구독(410/404)은 자동으로 정리합니다.
+임의 공지를 보내려면 `{"kind":"custom","title":"...","body":"...","url":"ranking.html"}` 형태로 호출하세요 (`user_ids`를 주면 해당 회원에게만).
+
+> 회원은 **프로필 > 알림 설정**에서 기기별로 알림을 켜고 끕니다. iPhone은 Safari에서 "홈 화면에 추가"로 설치한 뒤에야 알림을 켤 수 있습니다(iOS 16.4+).
+
+### 7. 배포
 
 정적 파일 그대로 Vercel / Netlify / GitHub Pages 등에 올리면 됩니다. 별도 빌드 커맨드가 필요 없습니다 (Output Directory: 프로젝트 루트).
+
+> PWA(설치·오프라인·푸시)는 **HTTPS에서만** 동작합니다. 위 호스팅들은 기본적으로 HTTPS라 그대로 사용하면 되고, 로컬 테스트는 `localhost`가 예외로 허용됩니다.
+> 앱을 새로 배포하면 서비스워커가 변경을 감지해 "새 버전이 있어요" 칩을 띄웁니다. 캐시 구성을 바꿨다면 `sw.js`의 `VERSION` 값을 올려주세요.
 
 ## 🔒 공개/비공개 설계 메모
 
@@ -122,3 +185,10 @@ update public.app_settings set value = 'yourcompany.com' where key = 'allowed_em
 - 이 세션 환경에서는 npm 레지스트리 접근이 막혀 있어 로컬에서 실제 Supabase 프로젝트에 연결한 통합 테스트(회원가입/로그인/DB 연동)를 진행하지 못했습니다. Supabase 프로젝트를 연결한 뒤 직접 가입 → 인증 등록 → 운영진 승인 → 랭킹 확인 흐름을 한 번 확인해주세요.
 - `enforce_email_domain` 트리거는 `auth.users` 테이블에 `BEFORE INSERT` 트리거를 생성합니다. 대부분의 Supabase 프로젝트에서 SQL Editor로 정상 생성되지만, 만약 권한 오류가 나면 대신 Supabase 대시보드의 **Authentication > Hooks** 기능으로 동일한 검증 함수를 연결하세요.
 - 반려(운영진 승인 페이지의 "✖ 반려")는 현재 기록을 바로 삭제합니다. 반려 사유를 남기고 싶다면 `practice_logs`/`score_logs`에 `rejected_reason` 컬럼을 추가하는 방식으로 확장할 수 있습니다.
+- `supabase/functions/send-push`는 **작성만 되어 있고 실제 배포·발송 테스트는 하지 못했습니다.** (이 개발 환경에서 npm 레지스트리와 Supabase 접근이 차단되어 있음) 배포 후 아래로 한 번 확인해보세요:
+  ```bash
+  curl -X POST "https://YOUR-PROJECT-REF.supabase.co/functions/v1/send-push" \
+    -H "Content-Type: application/json" -H "x-push-secret: 설정한값" \
+    -d '{"kind":"custom","title":"테스트","body":"푸시 연결 확인!"}'
+  ```
+- 서비스워커의 앱 셸 캐시 목록(`sw.js`의 `SHELL`)은 수동 관리입니다. 페이지나 스크립트를 추가하면 이 목록에도 넣어주세요.

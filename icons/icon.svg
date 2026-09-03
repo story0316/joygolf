@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="JoyGolf">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0b3d2e" />
+      <stop offset="55%" stop-color="#047857" />
+      <stop offset="100%" stop-color="#10b981" />
+    </linearGradient>
+    <radialGradient id="glow" cx="0.22" cy="0.16" r="0.75">
+      <stop offset="0%" stop-color="#a3e635" stop-opacity="0.45" />
+      <stop offset="100%" stop-color="#a3e635" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="ball" x1="0.3" y1="0" x2="0.8" y2="1">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#d7e6dc" />
+    </linearGradient>
+  </defs>
+
+  <!-- 배경: maskable 안전영역(중앙 80%)을 고려해 전면을 채운다 -->
+  <rect width="512" height="512" fill="url(#bg)" />
+  <rect width="512" height="512" fill="url(#glow)" />
+
+  <!-- 그린(언덕) -->
+  <path d="M56 372c48-26 108-40 200-40s152 14 200 40v140H56z" fill="#0b3d2e" opacity="0.5" />
+  <path d="M76 386c44-22 100-34 180-34s136 12 180 34c-52 22-112 32-180 32s-128-10-180-32z" fill="#34d399" opacity="0.55" />
+
+  <!-- 깃대 -->
+  <rect x="286" y="132" width="11" height="216" rx="5" fill="#f8fafc" />
+  <!-- 깃발 -->
+  <path d="M286 140h124l-34 40 34 40H286z" fill="#a3e635" />
+
+  <!-- 홀컵 -->
+  <ellipse cx="292" cy="352" rx="30" ry="11" fill="#052e22" opacity="0.75" />
+
+  <!-- 골프공 -->
+  <circle cx="176" cy="330" r="52" fill="url(#ball)" />
+  <g fill="#c3d6ca" opacity="0.85">
+    <circle cx="158" cy="312" r="6" />
+    <circle cx="180" cy="306" r="6" />
+    <circle cx="198" cy="322" r="6" />
+    <circle cx="160" cy="338" r="6" />
+    <circle cx="182" cy="332" r="6" />
+    <circle cx="196" cy="350" r="6" />
+    <circle cx="170" cy="358" r="6" />
+  </g>
+</svg>

@@ -367,7 +367,42 @@ create trigger enforce_email_domain_trigger
   for each row execute function public.enforce_email_domain();
 
 -- ============================================================
--- 8. 육각형 역량 원자료 뷰 (본인/공개 프로필만 RLS로 필터링됨)
+-- 8. push_subscriptions : 웹 푸시 구독 (브라우저/기기 단위)
+--    실제 발송은 Edge Function(supabase/functions/send-push)이 담당한다.
+-- ============================================================
+create table if not exists public.push_subscriptions (
+  endpoint text primary key,
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  p256dh text not null,
+  auth text not null,
+  user_agent text,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists push_subscriptions_user_id_idx
+  on public.push_subscriptions (user_id);
+
+alter table public.push_subscriptions enable row level security;
+
+create policy "push_subscriptions: 본인 구독만 열람"
+  on public.push_subscriptions for select to authenticated
+  using (user_id = auth.uid());
+
+create policy "push_subscriptions: 본인만 등록"
+  on public.push_subscriptions for insert to authenticated
+  with check (user_id = auth.uid());
+
+create policy "push_subscriptions: 본인만 수정"
+  on public.push_subscriptions for update to authenticated
+  using (user_id = auth.uid());
+
+create policy "push_subscriptions: 본인만 삭제"
+  on public.push_subscriptions for delete to authenticated
+  using (user_id = auth.uid());
+-- 발송용 Edge Function 은 service_role 키로 접근하므로 RLS 를 우회한다.
+
+-- ============================================================
+-- 9. 육각형 역량 원자료 뷰 (본인/공개 프로필만 RLS로 필터링됨)
 -- ============================================================
 create or replace view public.user_radar_raw
 with (security_invoker = true) as
@@ -396,8 +431,8 @@ from public.practice_logs p
 group by p.user_id;
 
 -- ============================================================
--- 9. 이달의 상 : SECURITY DEFINER 함수로 익명 처리하여 반환
---    (프로필 비공개 회원도 집계엔 포함되지만, award_visible=false면 이름 대신 '이름 없는 회원')
+-- 10. 이달의 상 : SECURITY DEFINER 함수로 익명 처리하여 반환
+--     (프로필 비공개 회원도 집계엔 포함되지만, award_visible=false면 이름 대신 '이름 없는 회원')
 -- ============================================================
 create or replace function public.get_monthly_awards()
 returns table (

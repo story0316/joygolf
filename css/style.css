@@ -805,6 +805,36 @@ select {
   #toast { bottom: 86px; }
 }
 
+/* ---------- 13-2. PWA 칩 (설치/업데이트 안내) ---------- */
+.pwa-chip {
+  position: fixed;
+  left: 20px;
+  bottom: 26px;
+  z-index: 190;
+  padding: 11px 18px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border-strong);
+  background: var(--surface-strong);
+  backdrop-filter: blur(20px) saturate(170%);
+  -webkit-backdrop-filter: blur(20px) saturate(170%);
+  box-shadow: var(--shadow-lg);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(14px) scale(0.95);
+  transition: opacity 0.3s var(--ease-out), transform 0.4s var(--ease-spring);
+}
+.pwa-chip.show { opacity: 1; transform: translateY(0) scale(1); }
+.pwa-chip:hover { border-color: var(--brand-400); }
+
+@media (max-width: 900px) {
+  /* 하단 독과 겹치지 않게 위로 올린다 */
+  .pwa-chip { left: 12px; right: 12px; bottom: 90px; }
+}
+
 /* ---------- 14. 빈 상태 ---------- */
 .empty-state {
   padding: 34px 16px;
