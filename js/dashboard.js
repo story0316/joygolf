@@ -20,6 +20,11 @@
   renderRecentActivity(practiceLogs || [], scoreLogs || []);
   renderUpcomingMeetups(meetups || []);
   await renderRadar(user.id);
+
+  JoyGolf.revealCards();
+
+  // 테마를 바꾸면 차트 색상도 따라가야 해서 다시 그린다
+  document.addEventListener("joygolf:themechange", () => renderRadar(user.id));
 })();
 
 function renderLevel(practiceLogs, scoreLogs) {
@@ -195,7 +200,18 @@ async function renderRadar(userId) {
     ? "공개 프로필 회원들과 비교한 상대적 위치예요 (본인 데이터만 비교에 사용)."
     : "아직 인증 기록이 없어요. 연습/스코어 인증을 등록하면 육각형이 채워져요!";
 
-  new Chart(document.getElementById("radarChart"), {
+  const isDark = window.JoyTheme && JoyTheme.current() === "dark";
+  const gridColor = isDark ? "rgba(255, 255, 255, 0.09)" : "rgba(6, 46, 34, 0.09)";
+  const labelColor = isDark ? "#b9cbc1" : "#33473d";
+
+  const canvas = document.getElementById("radarChart");
+
+  // 테마 전환 시 같은 캔버스에 다시 그리려면 기존 인스턴스를 먼저 정리해야 한다
+  const existing =
+    typeof Chart.getChart === "function" ? Chart.getChart(canvas) : window.__radarChart;
+  if (existing && typeof existing.destroy === "function") existing.destroy();
+
+  window.__radarChart = new Chart(canvas, {
     type: "radar",
     data: {
       labels: axes.map((a) => a.label),
@@ -203,15 +219,33 @@ async function renderRadar(userId) {
         {
           label: "내 역량",
           data: values,
-          backgroundColor: "rgba(34, 160, 107, 0.25)",
-          borderColor: "#22a06b",
+          backgroundColor: isDark ? "rgba(52, 211, 153, 0.22)" : "rgba(16, 185, 129, 0.2)",
+          borderColor: isDark ? "#34d399" : "#10b981",
           borderWidth: 2,
-          pointBackgroundColor: "#ff8a3d",
+          pointBackgroundColor: "#a3e635",
+          pointBorderColor: isDark ? "#070c0a" : "#ffffff",
+          pointBorderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 6,
         },
       ],
     },
     options: {
-      scales: { r: { min: 0, max: 100, ticks: { display: false }, pointLabels: { font: { size: 12 } } } },
+      responsive: true,
+      animation: { duration: 900, easing: "easeOutQuart" },
+      scales: {
+        r: {
+          min: 0,
+          max: 100,
+          ticks: { display: false, stepSize: 25 },
+          grid: { color: gridColor },
+          angleLines: { color: gridColor },
+          pointLabels: {
+            color: labelColor,
+            font: { size: 12, weight: "600", family: "Pretendard, sans-serif" },
+          },
+        },
+      },
       plugins: { legend: { display: false } },
     },
   });

@@ -14,11 +14,13 @@ const SUSPICIOUS_SCORE_MAX = 200; // 이보다 높은 토탈 스코어도 오타
 
   if (!isAdmin) {
     document.getElementById("notAdmin").style.display = "block";
+    JoyGolf.revealCards();
     return;
   }
   document.getElementById("adminContent").style.display = "block";
 
   await Promise.all([loadPracticeQueue(), loadScoreQueue()]);
+  JoyGolf.revealCards();
 })();
 
 async function loadPracticeQueue() {

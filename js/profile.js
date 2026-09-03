@@ -13,6 +13,7 @@ let currentUserId = null;
   document.getElementById("handicap").value = profile.handicap ?? "";
   document.getElementById("visibilitySelect").value = profile.profile_visibility || "private";
   document.getElementById("awardVisibleSelect").value = String(profile.award_visible ?? true);
+  JoyGolf.revealCards();
 })();
 
 document.getElementById("profileForm").addEventListener("submit", async (e) => {

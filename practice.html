@@ -4,53 +4,71 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>연습인증 | JoyGolf</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
   <link rel="stylesheet" href="css/style.css" />
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("joygolf-theme");
+        if (t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body>
+  <div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
   <div id="navbar"></div>
 
-  <div class="container">
-    <h1 class="page-title">🏋️ 연습 인증</h1>
-    <p class="subtitle">연습장 방문 기록을 남기고 육각형 역량과 레벨을 채워보세요.</p>
+  <main class="container">
+    <header class="page-head">
+      <p class="eyebrow">🏋️ Practice</p>
+      <h1 class="page-title">연습 인증</h1>
+      <p class="subtitle">연습장 기록을 남기고 육각형 역량과 레벨을 채워보세요.</p>
+    </header>
 
-    <div class="card">
-      <h3>새 연습 인증 등록</h3>
-      <form id="practiceForm">
-        <div class="form-row">
-          <div>
-            <label for="practiceDate">연습 날짜</label>
-            <input type="date" id="practiceDate" required />
+    <div class="grid-2">
+      <section class="card card-accent">
+        <div class="section-label"><h3>새 연습 인증 등록</h3></div>
+        <form id="practiceForm">
+          <div class="form-row">
+            <div>
+              <label for="practiceDate">연습 날짜</label>
+              <input type="date" id="practiceDate" required />
+            </div>
+            <div>
+              <label for="ballCount">연습공 개수</label>
+              <input type="number" id="ballCount" min="1" required placeholder="예: 100" />
+            </div>
           </div>
-          <div>
-            <label for="ballCount">연습공 개수</label>
-            <input type="number" id="ballCount" min="1" required placeholder="예: 100" />
-          </div>
-        </div>
-        <label for="location">연습장 이름 (선택)</label>
-        <input type="text" id="location" placeholder="예: OO스크린골프" />
 
-        <label for="note">한 줄 메모 (선택)</label>
-        <input type="text" id="note" placeholder="오늘 드라이버 감이 좋았다 등" />
+          <label for="location">연습장 이름 (선택)</label>
+          <input type="text" id="location" placeholder="예: OO스크린골프" />
 
-        <label for="photo">인증샷 (연습장 계기판/영수증 등)</label>
-        <input type="file" id="photo" accept="image/*" />
-        <p class="hint">사진을 첨부하면 운영진 검증 후 인증뱃지가 붙어요.</p>
+          <label for="note">한 줄 메모 (선택)</label>
+          <input type="text" id="note" placeholder="오늘 드라이버 감이 좋았다 등" />
 
-        <button type="submit" class="btn" id="submitBtn" style="margin-top: 16px;">✅ 인증 등록</button>
-      </form>
+          <label for="photo">인증샷 (계기판/영수증 등)</label>
+          <input type="file" id="photo" accept="image/*" />
+          <p class="hint">사진을 첨부하면 운영진 검증 후 인증뱃지가 붙어요.</p>
+
+          <button type="submit" class="btn" id="submitBtn" style="margin-top: 18px;">✅ 인증 등록</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <div class="section-label"><h3>내 연습 기록</h3></div>
+        <div id="practiceList"></div>
+        <p class="empty-state" id="practiceEmpty" style="display:none;">아직 등록된 연습 기록이 없어요.</p>
+      </section>
     </div>
-
-    <div class="card">
-      <h3>내 연습 기록</h3>
-      <div id="practiceList"></div>
-      <p class="empty-state" id="practiceEmpty" style="display:none;">아직 등록된 연습 기록이 없어요.</p>
-    </div>
-  </div>
+  </main>
 
   <div id="toast"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="js/config.js"></script>
+  <script src="js/theme.js"></script>
   <script src="js/supabaseClient.js"></script>
   <script src="js/nav.js"></script>
   <script src="js/practice.js"></script>

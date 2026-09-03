@@ -8,6 +8,7 @@ let currentUserId = null;
   JoyGolf.renderNav("score", { isAdmin: profile.is_admin });
   document.getElementById("roundDate").valueAsDate = new Date();
   await loadList();
+  JoyGolf.revealCards();
 })();
 
 document.getElementById("scoreForm").addEventListener("submit", async (e) => {

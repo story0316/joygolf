@@ -4,37 +4,49 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>JoyGolf | 사내 골프 동호회</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
   <link rel="stylesheet" href="css/style.css" />
+  <script>
+    // FOUC 방지: 저장된 테마를 페인트 전에 반영
+    (function () {
+      try {
+        var t = localStorage.getItem("joygolf-theme");
+        if (t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body>
+  <div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
+
   <div class="auth-wrap">
     <div class="auth-card">
-      <div class="auth-logo">🏌️‍♂️⛳</div>
-      <h1 style="margin: 4px 0 2px; font-size: 1.4rem;">JoyGolf</h1>
-      <p class="subtitle" style="margin-bottom: 0;">우리 회사 골프 동호회, 함께 즐겨요!</p>
+      <div class="auth-logo">🏌️</div>
+      <p class="eyebrow">Company Golf Club</p>
+      <h1 class="auth-title">JoyGolf</h1>
+      <p class="subtitle" style="margin-top: 6px;">연습하고, 인증하고, 같이 라운딩해요 ⛳</p>
 
-      <div class="tabs">
-        <button class="tab-btn active" id="tabLogin">로그인</button>
-        <button class="tab-btn" id="tabSignup">회원가입</button>
+      <div class="tabs" role="tablist">
+        <button class="tab-btn active" id="tabLogin" role="tab">로그인</button>
+        <button class="tab-btn" id="tabSignup" role="tab">회원가입</button>
       </div>
 
-      <form id="authForm">
+      <form id="authForm" class="auth-form">
         <label for="email">회사 이메일</label>
-        <input type="email" id="email" required placeholder="you@company.com" />
+        <input type="email" id="email" required placeholder="you@company.com" autocomplete="email" />
 
         <div id="nameField" style="display:none;">
           <label for="displayName">닉네임</label>
-          <input type="text" id="displayName" placeholder="필드에서 불릴 이름" />
+          <input type="text" id="displayName" placeholder="필드에서 불릴 이름" autocomplete="nickname" />
         </div>
 
         <label for="password">비밀번호</label>
-        <input type="password" id="password" required minlength="6" placeholder="6자 이상" />
+        <input type="password" id="password" required minlength="6" placeholder="6자 이상" autocomplete="current-password" />
 
-        <button type="submit" class="btn" style="width: 100%; justify-content: center; margin-top: 18px;" id="submitBtn">
-          로그인
-        </button>
+        <button type="submit" class="btn btn-block" style="margin-top: 22px;" id="submitBtn">로그인</button>
       </form>
-      <p class="hint" id="formHint" style="margin-top: 14px;"></p>
+      <p class="hint" id="formHint" style="margin-top: 14px; text-align: center;"></p>
     </div>
   </div>
 
@@ -42,6 +54,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="js/config.js"></script>
+  <script src="js/theme.js"></script>
   <script src="js/supabaseClient.js"></script>
   <script src="js/auth.js"></script>
 </body>

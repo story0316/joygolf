@@ -35,7 +35,7 @@ const medals = ["🥇", "🥈", "🥉"];
       return `
       <div class="award-card">
         <div class="award-title">${meta.icon} 이달의 ${type}</div>
-        <p class="hint" style="margin-top:-6px;">${meta.desc}</p>
+        <p class="hint" style="margin: 0 0 12px;">${meta.desc}</p>
         ${
           rows.length
             ? rows
@@ -53,4 +53,6 @@ const medals = ["🥇", "🥈", "🥉"];
       </div>`;
     })
     .join("");
+
+  JoyGolf.revealCards();
 })();

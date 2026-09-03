@@ -8,6 +8,7 @@ let currentUserId = null;
   JoyGolf.renderNav("practice", { isAdmin: profile.is_admin });
   document.getElementById("practiceDate").valueAsDate = new Date();
   await loadList();
+  JoyGolf.revealCards();
 })();
 
 document.getElementById("practiceForm").addEventListener("submit", async (e) => {

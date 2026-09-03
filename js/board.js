@@ -7,6 +7,7 @@ let currentUserId = null;
   const profile = await JoyGolf.getOrCreateProfile(session.user);
   JoyGolf.renderNav("board", { isAdmin: profile.is_admin });
   await loadPosts();
+  JoyGolf.revealCards();
 })();
 
 document.getElementById("postForm").addEventListener("submit", async (e) => {

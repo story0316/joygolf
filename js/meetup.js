@@ -13,6 +13,7 @@ const typeLabel = { round: "⛳ 라운딩", practice: "🏋️ 연습", etc: "�
   document.getElementById("meetupDate").value = d.toISOString().slice(0, 16);
 
   await loadList();
+  JoyGolf.revealCards();
 })();
 
 document.getElementById("meetupForm").addEventListener("submit", async (e) => {
