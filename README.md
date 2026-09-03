@@ -54,6 +54,7 @@ js/pwa.js           서비스워커 등록 / 설치·업데이트 안내
 js/push.js          웹 푸시 구독 관리
 js/*.js             페이지별 로직
 sql/schema.sql       Supabase DB 스키마 (테이블/RLS/이달의상 함수)
+sql/test/            스키마·RLS 테스트 (로컬 Postgres 로 실행)
 supabase/functions/send-push/  푸시 발송 Edge Function (Deno)
 ```
 
@@ -173,6 +174,31 @@ $$);
 > PWA(설치·오프라인·푸시)는 **HTTPS에서만** 동작합니다. 위 호스팅들은 기본적으로 HTTPS라 그대로 사용하면 되고, 로컬 테스트는 `localhost`가 예외로 허용됩니다.
 > 앱을 새로 배포하면 서비스워커가 변경을 감지해 "새 버전이 있어요" 칩을 띄웁니다. 캐시 구성을 바꿨다면 `sw.js`의 `VERSION` 값을 올려주세요.
 
+## 🧪 스키마 / RLS 테스트
+
+DB 계층은 앱의 프라이버시 약속이 실제로 구현된 곳이라, Supabase 프로젝트 없이도 검증할 수 있게 해뒀습니다.
+로컬 PostgreSQL(14+)만 있으면 됩니다.
+
+```bash
+sql/test/run.sh
+```
+
+임시 DB를 만들어 **Supabase 스텁 → `schema.sql` → 재적용(멱등성) → RLS 테스트** 순으로 돌리고,
+하나라도 실패하면 0이 아닌 종료코드로 끝납니다. 현재 25개 항목을 검증합니다:
+
+- 비공개 프로필의 연습/스코어 기록이 다른 회원에게 **보이지 않는지** (육각형 비교용 뷰 포함)
+- 공개 프로필의 기록은 반대로 **보이는지**
+- 남의 이름으로 기록을 만들 수 없는지, 자기 인증을 스스로 승인할 수 없는지
+- 스스로 운영진이 될 수 없는지, 운영진 지정이 SQL Editor에서만 되는지
+- 운영진이 공개설정과 무관하게 승인 대기열 전체를 보는지
+- `award_visible=false`인 회원이 이달의 상에서 **"이름 없는 회원"으로 익명화**되는지
+- 이달의 상 3개 부문 집계값이 정확한지
+- 허용 도메인 밖 이메일의 가입이 트리거로 차단되는지
+
+`sql/test/00_supabase_shim.sql`은 맨 Postgres에 없는 것들(`auth.uid()`, `auth.users`, `storage`,
+`anon`/`authenticated`/`service_role` 역할과 기본 권한)을 재현합니다. **테스트 전용이므로 실제
+Supabase 프로젝트에는 절대 실행하지 마세요.**
+
 ## 🔒 공개/비공개 설계 메모
 
 - `profiles.profile_visibility`: 육각형 차트·개인 인증 내역 등 **상세 기록**의 공개 범위 (`public`/`private`)
@@ -182,7 +208,7 @@ $$);
 
 ## ⚠️ 알려진 제약 / TODO
 
-- 이 세션 환경에서는 npm 레지스트리 접근이 막혀 있어 로컬에서 실제 Supabase 프로젝트에 연결한 통합 테스트(회원가입/로그인/DB 연동)를 진행하지 못했습니다. Supabase 프로젝트를 연결한 뒤 직접 가입 → 인증 등록 → 운영진 승인 → 랭킹 확인 흐름을 한 번 확인해주세요.
+- DB 계층(테이블/RLS/트리거/함수)은 `sql/test/run.sh`로 로컬 검증했지만, **실제 Supabase 프로젝트에 연결한 프론트엔드 통합 테스트(회원가입 → 로그인 → 사진 업로드 → 운영진 승인)는 아직 못 했습니다.** 프로젝트를 연결한 뒤 이 흐름을 한 번 확인해주세요. 특히 Storage 업로드는 스텁으로 대체할 수 없어 검증 범위 밖입니다.
 - `enforce_email_domain` 트리거는 `auth.users` 테이블에 `BEFORE INSERT` 트리거를 생성합니다. 대부분의 Supabase 프로젝트에서 SQL Editor로 정상 생성되지만, 만약 권한 오류가 나면 대신 Supabase 대시보드의 **Authentication > Hooks** 기능으로 동일한 검증 함수를 연결하세요.
 - 반려(운영진 승인 페이지의 "✖ 반려")는 현재 기록을 바로 삭제합니다. 반려 사유를 남기고 싶다면 `practice_logs`/`score_logs`에 `rejected_reason` 컬럼을 추가하는 방식으로 확장할 수 있습니다.
 - `supabase/functions/send-push`는 **작성만 되어 있고 실제 배포·발송 테스트는 하지 못했습니다.** (이 개발 환경에서 npm 레지스트리와 Supabase 접근이 차단되어 있음) 배포 후 아래로 한 번 확인해보세요:
