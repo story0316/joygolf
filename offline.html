@@ -2,21 +2,33 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#080d0b" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#f4f8f5" media="(prefers-color-scheme: light)" />
+  <meta name="description" content="JoyGolf — 사내 골프 동호회. 연습과 라운드를 인증하고, 육각형 역량과 레벨을 함께 키워요." />
   <title>오프라인 | JoyGolf</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="JoyGolf" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
   <link rel="stylesheet" href="css/style.css" />
   <script>
+    // 테마를 페인트 전에 확정해 깜빡임(FOUC)을 막는다.
     (function () {
+      var t = "dark";
       try {
-        var t = localStorage.getItem("joygolf-theme");
-        if (t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t);
+        t = localStorage.getItem("joygolf-theme") ||
+          (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
       } catch (e) {}
+      document.documentElement.setAttribute("data-theme", t);
     })();
   </script>
 </head>
 <body>
-  <div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
-
   <div class="auth-wrap">
     <div class="auth-card">
       <div class="auth-logo">📡</div>

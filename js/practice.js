@@ -6,7 +6,9 @@ let currentUserId = null;
   currentUserId = session.user.id;
   const profile = await JoyGolf.getOrCreateProfile(session.user);
   JoyGolf.renderNav("practice", { isAdmin: profile.is_admin });
+
   document.getElementById("practiceDate").valueAsDate = new Date();
+  document.getElementById("practiceList").innerHTML = JoyGolf.skeleton(4);
   await loadList();
   JoyGolf.revealCards();
 })().catch((err) => JoyGolf.fatal(err));
@@ -15,13 +17,12 @@ document.getElementById("practiceForm").addEventListener("submit", async (e) => 
   e.preventDefault();
   const submitBtn = document.getElementById("submitBtn");
   submitBtn.disabled = true;
+  submitBtn.textContent = "등록 중…";
 
   try {
     const file = document.getElementById("photo").files[0];
     let photoUrl = null;
-    if (file) {
-      photoUrl = await JoyGolf.uploadProof(file, `practice/${currentUserId}`);
-    }
+    if (file) photoUrl = await JoyGolf.uploadProof(file, `practice/${currentUserId}`);
 
     const { error } = await sb.from("practice_logs").insert({
       user_id: currentUserId,
@@ -41,6 +42,7 @@ document.getElementById("practiceForm").addEventListener("submit", async (e) => 
     JoyGolf.showToast("⚠️ " + (err.message || "등록 실패"));
   } finally {
     submitBtn.disabled = false;
+    submitBtn.textContent = "✅ 인증 등록";
   }
 });
 
@@ -57,31 +59,37 @@ async function loadList() {
 
   // 조회 실패를 "기록 없음"으로 보여주면 회원은 기록이 사라졌다고 오해한다
   if (error) {
-    empty.style.display = "none";
+    empty.hidden = true;
+    document.getElementById("practiceTotal").textContent = "0건";
     el.innerHTML = JoyGolf.errorState("연습 기록을 불러오지 못했어요", error);
     return;
   }
-  if (!data || !data.length) {
-    empty.style.display = "block";
-    el.innerHTML = "";
-    return;
-  }
-  empty.style.display = "none";
 
-  el.innerHTML = data
+  const logs = data || [];
+  empty.hidden = logs.length > 0;
+  document.getElementById("practiceTotal").textContent = `${logs.length}건`;
+
+  el.innerHTML = logs
     .map(
       (p) => `
     <div class="list-item">
       <div class="list-item-head">
-        <span><strong>${JoyGolf.formatDate(p.practice_date)}</strong> · 공 ${p.ball_count}개 ${p.location ? "· " + JoyGolf.escapeHtml(p.location) : ""}</span>
-        <span class="badge ${p.verified ? "badge-green" : "badge-gray"}">${p.verified ? "✅ 검증완료" : "검증대기"}</span>
+        <span class="list-item-title">
+          🏋️ ${JoyGolf.formatDate(p.practice_date)} · 공 ${p.ball_count.toLocaleString()}개
+        </span>
+        <span class="badge ${p.verified ? "badge-green" : "badge-gray"}">
+          <span class="dot"></span>${p.verified ? "검증완료" : "검증대기"}
+        </span>
       </div>
-      ${p.note ? `<div class="hint">${JoyGolf.escapeHtml(p.note)}</div>` : ""}
-      ${p.photo_url ? `<img src="${p.photo_url}" class="proof-thumb" alt="인증샷" />` : ""}
+      ${p.location ? `<p class="hint">📍 ${JoyGolf.escapeHtml(p.location)}</p>` : ""}
+      ${p.note ? `<p class="hint">💬 ${JoyGolf.escapeHtml(p.note)}</p>` : ""}
+      ${p.photo_url ? `<img src="${p.photo_url}" class="proof-thumb" alt="연습 인증샷" loading="lazy" />` : ""}
       ${
-        !p.verified
-          ? `<button class="btn btn-sm btn-danger" style="margin-top:8px;" onclick="deletePractice('${p.id}')">삭제</button>`
-          : ""
+        p.verified
+          ? ""
+          : `<div class="list-item-actions">
+               <button class="btn btn-sm btn-danger" onclick="deletePractice('${p.id}')">삭제</button>
+             </div>`
       }
     </div>`
     )

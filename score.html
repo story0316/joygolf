@@ -2,105 +2,126 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#080d0b" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#f4f8f5" media="(prefers-color-scheme: light)" />
+  <meta name="description" content="JoyGolf — 사내 골프 동호회. 연습과 라운드를 인증하고, 육각형 역량과 레벨을 함께 키워요." />
   <title>스코어인증 | JoyGolf</title>
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
   <link rel="manifest" href="manifest.webmanifest" />
-  <meta name="theme-color" content="#f4f7f4" media="(prefers-color-scheme: light)" />
-  <meta name="theme-color" content="#070c0a" media="(prefers-color-scheme: dark)" />
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="JoyGolf" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
   <link rel="stylesheet" href="css/style.css" />
   <script>
+    // 테마를 페인트 전에 확정해 깜빡임(FOUC)을 막는다.
     (function () {
+      var t = "dark";
       try {
-        var t = localStorage.getItem("joygolf-theme");
-        if (t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t);
+        t = localStorage.getItem("joygolf-theme") ||
+          (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
       } catch (e) {}
+      document.documentElement.setAttribute("data-theme", t);
     })();
   </script>
 </head>
 <body>
-  <div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
   <div id="navbar"></div>
 
   <main class="container">
-    <header class="page-head">
-      <p class="eyebrow">⛳ Scorecard</p>
+    <header class="page-head reveal">
+      <span class="eyebrow">⛳ Round</span>
       <h1 class="page-title">스코어 인증</h1>
-      <p class="subtitle">골프존/필드 스코어카드를 인증하고 성장 그래프를 채워보세요.</p>
+      <p class="subtitle">골프존·필드 스코어카드를 인증하고 성장 그래프와 육각형을 채워보세요.</p>
     </header>
 
-    <div class="grid-2">
-      <section class="card card-accent">
-        <div class="section-label"><h3>새 라운드 인증 등록</h3></div>
+    <div class="bento">
+      <section class="card col-5">
+        <div class="card-head">
+          <span class="card-icon">✍️</span>
+          <h3 class="flex-1">새 라운드 인증</h3>
+        </div>
+
         <form id="scoreForm">
           <div class="form-row">
-            <div>
+            <div class="field">
               <label for="roundDate">라운드 날짜</label>
               <input type="date" id="roundDate" required />
             </div>
-            <div>
-              <label for="courseName">코스/골프존 지점</label>
-              <input type="text" id="courseName" placeholder="예: OO CC / OO 골프존" />
+            <div class="field">
+              <label for="courseName">코스 / 골프존 지점</label>
+              <input type="text" id="courseName" placeholder="예: OO CC" />
             </div>
           </div>
 
           <div class="form-row">
-            <div>
+            <div class="field">
               <label for="totalScore">토탈 스코어</label>
               <input type="number" id="totalScore" required placeholder="예: 92" />
             </div>
-            <div>
-              <label for="par">파(기준타수)</label>
+            <div class="field">
+              <label for="par">파 (기준타수)</label>
               <input type="number" id="par" value="72" required />
             </div>
           </div>
 
           <div class="form-row">
-            <div>
-              <label for="putts">퍼팅 수 (선택)</label>
+            <div class="field">
+              <label for="putts">퍼팅 수 <span class="hint" style="display:inline">(선택)</span></label>
               <input type="number" id="putts" placeholder="예: 34" />
             </div>
-            <div>
-              <label>페어웨이 안착 (선택)</label>
-              <div style="display:flex; gap:8px;">
+            <div class="field">
+              <label for="fairwaysHit">페어웨이 안착 <span class="hint" style="display:inline">(선택)</span></label>
+              <div class="input-pair">
                 <input type="number" id="fairwaysHit" placeholder="적중" />
+                <span class="sep">/</span>
                 <input type="number" id="fairwaysTotal" placeholder="전체" />
               </div>
             </div>
           </div>
 
-          <label>그린 적중 GIR (선택, 예: 4/18)</label>
-          <div style="display:flex; gap:8px;">
-            <input type="number" id="girHit" placeholder="적중" />
-            <input type="number" id="girTotal" placeholder="전체" />
+          <div class="field">
+            <label for="girHit">그린 적중 GIR <span class="hint" style="display:inline">(선택)</span></label>
+            <div class="input-pair">
+              <input type="number" id="girHit" placeholder="적중" />
+              <span class="sep">/</span>
+              <input type="number" id="girTotal" placeholder="전체" />
+            </div>
           </div>
 
-          <label for="note">한 줄 후기 (선택)</label>
-          <input type="text" id="note" placeholder="오늘 라운드 소감" />
+          <div class="field">
+            <label for="note">한 줄 후기 <span class="hint" style="display:inline">(선택)</span></label>
+            <input type="text" id="note" placeholder="오늘 라운드 소감" />
+          </div>
 
-          <label for="photo">스코어카드 인증샷</label>
-          <input type="file" id="photo" accept="image/*" />
-          <p class="hint">골프존 결과화면 또는 필드 스코어카드 사진을 첨부해주세요.</p>
+          <div class="field">
+            <label for="photo">스코어카드 인증샷</label>
+            <input type="file" id="photo" accept="image/*" />
+            <p class="hint">골프존 결과화면 또는 필드 스코어카드 사진을 첨부해주세요.</p>
+          </div>
 
-          <button type="submit" class="btn" id="submitBtn" style="margin-top: 18px;">✅ 인증 등록</button>
+          <button type="submit" class="btn btn-block mt-16" id="submitBtn">✅ 인증 등록</button>
         </form>
       </section>
 
-      <section class="card">
-        <div class="section-label"><h3>내 스코어 기록</h3></div>
+      <section class="card col-7">
+        <div class="card-head">
+          <span class="card-icon">📊</span>
+          <h3 class="flex-1">내 스코어 기록</h3>
+          <span class="badge badge-gray" id="scoreTotal">0건</span>
+        </div>
         <div id="scoreList"></div>
-        <p class="empty-state" id="scoreEmpty" style="display:none;">아직 등록된 스코어 기록이 없어요.</p>
+        <p class="empty-state" id="scoreEmpty" hidden>
+          <span class="emoji">⛳</span>아직 등록된 스코어 기록이 없어요.<br />왼쪽에서 첫 라운드를 인증해보세요!
+        </p>
       </section>
     </div>
   </main>
 
-  <div id="toast"></div>
+  <div id="toast" role="status" aria-live="polite"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="js/config.js"></script>

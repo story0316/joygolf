@@ -6,7 +6,9 @@ let currentUserId = null;
   currentUserId = session.user.id;
   const profile = await JoyGolf.getOrCreateProfile(session.user);
   JoyGolf.renderNav("score", { isAdmin: profile.is_admin });
+
   document.getElementById("roundDate").valueAsDate = new Date();
+  document.getElementById("scoreList").innerHTML = JoyGolf.skeleton(4);
   await loadList();
   JoyGolf.revealCards();
 })().catch((err) => JoyGolf.fatal(err));
@@ -15,18 +17,17 @@ document.getElementById("scoreForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const submitBtn = document.getElementById("submitBtn");
   submitBtn.disabled = true;
+  submitBtn.textContent = "등록 중…";
 
   try {
     const file = document.getElementById("photo").files[0];
     let photoUrl = null;
-    if (file) {
-      photoUrl = await JoyGolf.uploadProof(file, `score/${currentUserId}`);
-    }
+    if (file) photoUrl = await JoyGolf.uploadProof(file, `score/${currentUserId}`);
 
-    const fairwaysHit = document.getElementById("fairwaysHit").value;
-    const fairwaysTotal = document.getElementById("fairwaysTotal").value;
-    const girHit = document.getElementById("girHit").value;
-    const girTotal = document.getElementById("girTotal").value;
+    const num = (id) => {
+      const v = document.getElementById(id).value;
+      return v === "" ? null : Number(v);
+    };
 
     const { error } = await sb.from("score_logs").insert({
       user_id: currentUserId,
@@ -34,11 +35,11 @@ document.getElementById("scoreForm").addEventListener("submit", async (e) => {
       course_name: document.getElementById("courseName").value || null,
       total_score: Number(document.getElementById("totalScore").value),
       par: Number(document.getElementById("par").value) || 72,
-      putts: document.getElementById("putts").value ? Number(document.getElementById("putts").value) : null,
-      fairways_hit: fairwaysHit ? Number(fairwaysHit) : null,
-      fairways_total: fairwaysTotal ? Number(fairwaysTotal) : null,
-      gir: girHit ? Number(girHit) : null,
-      gir_total: girTotal ? Number(girTotal) : null,
+      putts: num("putts"),
+      fairways_hit: num("fairwaysHit"),
+      fairways_total: num("fairwaysTotal"),
+      gir: num("girHit"),
+      gir_total: num("girTotal"),
       note: document.getElementById("note").value || null,
       photo_url: photoUrl,
     });
@@ -53,6 +54,7 @@ document.getElementById("scoreForm").addEventListener("submit", async (e) => {
     JoyGolf.showToast("⚠️ " + (err.message || "등록 실패"));
   } finally {
     submitBtn.disabled = false;
+    submitBtn.textContent = "✅ 인증 등록";
   }
 });
 
@@ -68,36 +70,48 @@ async function loadList() {
   const empty = document.getElementById("scoreEmpty");
 
   if (error) {
-    empty.style.display = "none";
+    empty.hidden = true;
+    document.getElementById("scoreTotal").textContent = "0건";
     el.innerHTML = JoyGolf.errorState("스코어 기록을 불러오지 못했어요", error);
     return;
   }
-  if (!data || !data.length) {
-    empty.style.display = "block";
-    el.innerHTML = "";
-    return;
-  }
-  empty.style.display = "none";
 
-  el.innerHTML = data
+  const logs = data || [];
+  empty.hidden = logs.length > 0;
+  document.getElementById("scoreTotal").textContent = `${logs.length}건`;
+
+  el.innerHTML = logs
     .map((s) => {
       const diff = s.total_score - s.par;
-      const diffLabel = diff === 0 ? "이븐파" : diff > 0 ? `+${diff}` : diff;
+      const diffLabel = diff === 0 ? "이븐파" : diff > 0 ? `+${diff}` : `${diff}`;
+
+      const details = [
+        s.putts != null ? `퍼팅 ${s.putts}` : null,
+        s.fairways_hit != null ? `페어웨이 ${s.fairways_hit}/${s.fairways_total}` : null,
+        s.gir != null ? `GIR ${s.gir}/${s.gir_total}` : null,
+      ].filter(Boolean);
+
       return `
     <div class="list-item">
       <div class="list-item-head">
-        <span><strong>${JoyGolf.formatDate(s.round_date)}</strong> · ${s.total_score}타 (${diffLabel}) ${s.course_name ? "· " + JoyGolf.escapeHtml(s.course_name) : ""}</span>
-        <span class="badge ${s.verified ? "badge-green" : "badge-gray"}">${s.verified ? "✅ 검증완료" : "검증대기"}</span>
+        <span class="list-item-title">
+          ⛳ ${JoyGolf.formatDate(s.round_date)} · <strong>${s.total_score}타</strong>
+          <span class="badge ${diff <= 0 ? "badge-green" : "badge-orange"}">${diffLabel}</span>
+        </span>
+        <span class="badge ${s.verified ? "badge-green" : "badge-gray"}">
+          <span class="dot"></span>${s.verified ? "검증완료" : "검증대기"}
+        </span>
       </div>
-      <div class="hint">
-        ${s.putts ? `퍼팅 ${s.putts} · ` : ""}${s.fairways_hit != null ? `페어웨이 ${s.fairways_hit}/${s.fairways_total} · ` : ""}${s.gir != null ? `GIR ${s.gir}/${s.gir_total}` : ""}
-      </div>
-      ${s.note ? `<div class="hint">${JoyGolf.escapeHtml(s.note)}</div>` : ""}
-      ${s.photo_url ? `<img src="${s.photo_url}" class="proof-thumb" alt="스코어카드" />` : ""}
+      ${s.course_name ? `<p class="hint">📍 ${JoyGolf.escapeHtml(s.course_name)}</p>` : ""}
+      ${details.length ? `<p class="hint">${details.join(" · ")}</p>` : ""}
+      ${s.note ? `<p class="hint">💬 ${JoyGolf.escapeHtml(s.note)}</p>` : ""}
+      ${s.photo_url ? `<img src="${s.photo_url}" class="proof-thumb" alt="스코어카드" loading="lazy" />` : ""}
       ${
-        !s.verified
-          ? `<button class="btn btn-sm btn-danger" style="margin-top:8px;" onclick="deleteScore('${s.id}')">삭제</button>`
-          : ""
+        s.verified
+          ? ""
+          : `<div class="list-item-actions">
+               <button class="btn btn-sm btn-danger" onclick="deleteScore('${s.id}')">삭제</button>
+             </div>`
       }
     </div>`;
     })

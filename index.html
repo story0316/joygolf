@@ -2,63 +2,79 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#080d0b" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#f4f8f5" media="(prefers-color-scheme: light)" />
+  <meta name="description" content="JoyGolf — 사내 골프 동호회. 연습과 라운드를 인증하고, 육각형 역량과 레벨을 함께 키워요." />
   <title>JoyGolf | 사내 골프 동호회</title>
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
   <link rel="manifest" href="manifest.webmanifest" />
-  <meta name="theme-color" content="#f4f7f4" media="(prefers-color-scheme: light)" />
-  <meta name="theme-color" content="#070c0a" media="(prefers-color-scheme: dark)" />
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="JoyGolf" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
   <link rel="stylesheet" href="css/style.css" />
   <script>
-    // FOUC 방지: 저장된 테마를 페인트 전에 반영
+    // 테마를 페인트 전에 확정해 깜빡임(FOUC)을 막는다.
     (function () {
+      var t = "dark";
       try {
-        var t = localStorage.getItem("joygolf-theme");
-        if (t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t);
+        t = localStorage.getItem("joygolf-theme") ||
+          (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
       } catch (e) {}
+      document.documentElement.setAttribute("data-theme", t);
     })();
   </script>
 </head>
 <body>
-  <div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
+  <button id="themeToggle" class="icon-btn" aria-label="테마 전환"
+          style="position: fixed; top: 20px; right: 20px; z-index: 10;">🌙</button>
 
   <div class="auth-wrap">
     <div class="auth-card">
-      <div class="auth-logo">🏌️</div>
-      <p class="eyebrow">Company Golf Club</p>
+      <div class="auth-logo">⛳</div>
       <h1 class="auth-title">JoyGolf</h1>
-      <p class="subtitle" style="margin-top: 6px;">연습하고, 인증하고, 같이 라운딩해요 ⛳</p>
+      <p class="subtitle" style="margin: 0 auto;">
+        연습부터 라운드까지, 우리 회사 골프 동호회의 성장 기록
+      </p>
 
-      <div class="tabs" role="tablist">
-        <button class="tab-btn active" id="tabLogin" role="tab">로그인</button>
-        <button class="tab-btn" id="tabSignup" role="tab">회원가입</button>
+      <div class="segmented" role="tablist">
+        <button class="tab-btn active" id="tabLogin" role="tab" aria-selected="true">로그인</button>
+        <button class="tab-btn" id="tabSignup" role="tab" aria-selected="false">회원가입</button>
       </div>
 
-      <form id="authForm" class="auth-form">
-        <label for="email">회사 이메일</label>
-        <input type="email" id="email" required placeholder="you@company.com" autocomplete="email" />
-
-        <div id="nameField" style="display:none;">
-          <label for="displayName">닉네임</label>
-          <input type="text" id="displayName" placeholder="필드에서 불릴 이름" autocomplete="nickname" />
+      <form id="authForm">
+        <div class="field">
+          <label for="email">회사 이메일</label>
+          <input type="email" id="email" required autocomplete="email" placeholder="you@company.com" />
         </div>
 
-        <label for="password">비밀번호</label>
-        <input type="password" id="password" required minlength="6" placeholder="6자 이상" autocomplete="current-password" />
+        <div class="field" id="nameField" hidden>
+          <label for="displayName">닉네임</label>
+          <input type="text" id="displayName" autocomplete="nickname" placeholder="필드에서 불릴 이름" />
+        </div>
 
-        <button type="submit" class="btn btn-block" style="margin-top: 22px;" id="submitBtn">로그인</button>
+        <div class="field">
+          <label for="password">비밀번호</label>
+          <input type="password" id="password" required minlength="6" autocomplete="current-password" placeholder="6자 이상" />
+        </div>
+
+        <button type="submit" class="btn btn-block mt-20" id="submitBtn">로그인</button>
       </form>
-      <p class="hint" id="formHint" style="margin-top: 14px; text-align: center;"></p>
+
+      <p class="form-hint" id="formHint" role="status" aria-live="polite"></p>
+
+      <div class="auth-features">
+        <span class="badge badge-green">🏋️ 연습 인증</span>
+        <span class="badge badge-green">⬡ 육각형 역량</span>
+        <span class="badge badge-orange">🏆 이달의 상</span>
+      </div>
     </div>
   </div>
 
-  <div id="toast"></div>
+  <div id="toast" role="status" aria-live="polite"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="js/config.js"></script>
@@ -66,5 +82,16 @@
   <script src="js/supabaseClient.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/pwa.js"></script>
+  <script>
+    (function () {
+      var btn = document.getElementById("themeToggle");
+      function sync() { btn.textContent = JoyTheme.current() === "dark" ? "☀️" : "🌙"; }
+      sync();
+      btn.addEventListener("click", function () {
+        JoyTheme.toggle();
+        sync();
+      });
+    })();
+  </script>
 </body>
 </html>

@@ -2,65 +2,74 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#080d0b" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#f4f8f5" media="(prefers-color-scheme: light)" />
+  <meta name="description" content="JoyGolf — 사내 골프 동호회. 연습과 라운드를 인증하고, 육각형 역량과 레벨을 함께 키워요." />
   <title>운영진 승인 | JoyGolf</title>
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
   <link rel="manifest" href="manifest.webmanifest" />
-  <meta name="theme-color" content="#f4f7f4" media="(prefers-color-scheme: light)" />
-  <meta name="theme-color" content="#070c0a" media="(prefers-color-scheme: dark)" />
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="JoyGolf" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
   <link rel="stylesheet" href="css/style.css" />
   <script>
+    // 테마를 페인트 전에 확정해 깜빡임(FOUC)을 막는다.
     (function () {
+      var t = "dark";
       try {
-        var t = localStorage.getItem("joygolf-theme");
-        if (t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t);
+        t = localStorage.getItem("joygolf-theme") ||
+          (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
       } catch (e) {}
+      document.documentElement.setAttribute("data-theme", t);
     })();
   </script>
 </head>
 <body>
-  <div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
   <div id="navbar"></div>
 
   <main class="container">
-    <header class="page-head">
-      <p class="eyebrow">🛡️ Admin</p>
+    <header class="page-head reveal">
+      <span class="eyebrow">🛡️ Admin</span>
       <h1 class="page-title">운영진 승인 대기열</h1>
-      <p class="subtitle">연습/스코어 인증 사진을 확인하고 승인 또는 반려하세요.</p>
+      <p class="subtitle">연습·스코어 인증 사진을 확인하고 승인 또는 반려하세요.</p>
     </header>
 
-    <div id="notAdmin" class="card empty-state" style="display:none;">
-      🙅 운영진만 접근할 수 있는 페이지예요.
+    <div id="notAdmin" class="empty-state" hidden>
+      <span class="emoji">🙅</span>운영진만 접근할 수 있는 페이지예요.
     </div>
 
-    <div id="adminContent" style="display:none;">
-      <section class="card">
-        <div class="section-label">
-          <h3>🏋️ 연습 인증 대기</h3>
+    <div id="adminContent" class="bento" hidden>
+      <section class="card col-6">
+        <div class="card-head">
+          <span class="card-icon">🏋️</span>
+          <h3 class="flex-1">연습 인증 대기</h3>
           <span class="badge badge-orange" id="practiceCount">0</span>
         </div>
         <div id="practiceQueue"></div>
-        <p class="empty-state" id="practiceEmpty" style="display:none;">대기 중인 연습 인증이 없어요.</p>
+        <p class="empty-state" id="practiceEmpty" hidden>
+          <span class="emoji">✨</span>대기 중인 연습 인증이 없어요.
+        </p>
       </section>
 
-      <section class="card">
-        <div class="section-label">
-          <h3>⛳ 스코어 인증 대기</h3>
+      <section class="card col-6">
+        <div class="card-head">
+          <span class="card-icon">⛳</span>
+          <h3 class="flex-1">스코어 인증 대기</h3>
           <span class="badge badge-orange" id="scoreCount">0</span>
         </div>
         <div id="scoreQueue"></div>
-        <p class="empty-state" id="scoreEmpty" style="display:none;">대기 중인 스코어 인증이 없어요.</p>
+        <p class="empty-state" id="scoreEmpty" hidden>
+          <span class="emoji">✨</span>대기 중인 스코어 인증이 없어요.
+        </p>
       </section>
     </div>
   </main>
 
-  <div id="toast"></div>
+  <div id="toast" role="status" aria-live="polite"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="js/config.js"></script>

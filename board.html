@@ -2,60 +2,77 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#080d0b" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#f4f8f5" media="(prefers-color-scheme: light)" />
+  <meta name="description" content="JoyGolf — 사내 골프 동호회. 연습과 라운드를 인증하고, 육각형 역량과 레벨을 함께 키워요." />
   <title>후기게시판 | JoyGolf</title>
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
   <link rel="manifest" href="manifest.webmanifest" />
-  <meta name="theme-color" content="#f4f7f4" media="(prefers-color-scheme: light)" />
-  <meta name="theme-color" content="#070c0a" media="(prefers-color-scheme: dark)" />
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="JoyGolf" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
   <link rel="stylesheet" href="css/style.css" />
   <script>
+    // 테마를 페인트 전에 확정해 깜빡임(FOUC)을 막는다.
     (function () {
+      var t = "dark";
       try {
-        var t = localStorage.getItem("joygolf-theme");
-        if (t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t);
+        t = localStorage.getItem("joygolf-theme") ||
+          (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
       } catch (e) {}
+      document.documentElement.setAttribute("data-theme", t);
     })();
   </script>
 </head>
 <body>
-  <div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
   <div id="navbar"></div>
 
   <main class="container">
-    <header class="page-head">
-      <p class="eyebrow">📝 Stories</p>
+    <header class="page-head reveal">
+      <span class="eyebrow">📝 Community</span>
       <h1 class="page-title">라운딩 후기 게시판</h1>
       <p class="subtitle">오늘의 인생샷, 웃긴 에피소드, 라운딩 후기를 자유롭게 남겨보세요.</p>
     </header>
 
-    <section class="card card-accent">
-      <div class="section-label"><h3>새 글 작성</h3></div>
+    <section class="card">
+      <div class="card-head">
+        <span class="card-icon">✍️</span>
+        <h3 class="flex-1">새 글 작성</h3>
+      </div>
+
       <form id="postForm">
-        <label for="postTitle">제목</label>
-        <input type="text" id="postTitle" required placeholder="예: 오늘 첫 이글 했습니다 🎉" />
+        <div class="field">
+          <label for="postTitle">제목</label>
+          <input type="text" id="postTitle" required placeholder="예: 오늘 첫 이글 했습니다 🎉" />
+        </div>
 
-        <label for="postContent">내용</label>
-        <textarea id="postContent" rows="4" placeholder="후기를 남겨주세요"></textarea>
+        <div class="field">
+          <label for="postContent">내용</label>
+          <textarea id="postContent" rows="4" placeholder="후기를 남겨주세요"></textarea>
+        </div>
 
-        <label for="postPhoto">사진 (선택)</label>
-        <input type="file" id="postPhoto" accept="image/*" />
+        <div class="field">
+          <label for="postPhoto">사진 <span class="hint" style="display:inline">(선택)</span></label>
+          <input type="file" id="postPhoto" accept="image/*" />
+        </div>
 
-        <button type="submit" class="btn" id="submitBtn" style="margin-top: 18px;">✍️ 등록</button>
+        <div class="row">
+          <button type="submit" class="btn row-end" id="submitBtn">✍️ 등록하기</button>
+        </div>
       </form>
     </section>
 
-    <div id="postList"></div>
-    <p class="empty-state" id="postEmpty" style="display:none;">아직 게시글이 없어요. 첫 후기를 남겨보세요!</p>
+    <div id="postList" class="stack"></div>
+    <p class="empty-state" id="postEmpty" hidden>
+      <span class="emoji">💬</span>아직 게시글이 없어요.<br />첫 후기를 남겨보세요!
+    </p>
   </main>
 
-  <div id="toast"></div>
+  <div id="toast" role="status" aria-live="polite"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="js/config.js"></script>

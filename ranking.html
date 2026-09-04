@@ -2,43 +2,50 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#080d0b" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#f4f8f5" media="(prefers-color-scheme: light)" />
+  <meta name="description" content="JoyGolf — 사내 골프 동호회. 연습과 라운드를 인증하고, 육각형 역량과 레벨을 함께 키워요." />
   <title>랭킹 | JoyGolf</title>
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
   <link rel="manifest" href="manifest.webmanifest" />
-  <meta name="theme-color" content="#f4f7f4" media="(prefers-color-scheme: light)" />
-  <meta name="theme-color" content="#070c0a" media="(prefers-color-scheme: dark)" />
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="JoyGolf" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
   <link rel="stylesheet" href="css/style.css" />
   <script>
+    // 테마를 페인트 전에 확정해 깜빡임(FOUC)을 막는다.
     (function () {
+      var t = "dark";
       try {
-        var t = localStorage.getItem("joygolf-theme");
-        if (t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t);
+        t = localStorage.getItem("joygolf-theme") ||
+          (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
       } catch (e) {}
+      document.documentElement.setAttribute("data-theme", t);
     })();
   </script>
 </head>
 <body>
-  <div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
   <div id="navbar"></div>
 
   <main class="container">
-    <header class="page-head">
-      <p class="eyebrow" id="monthLabel">이달의 시상</p>
-      <h1 class="page-title"><span class="emoji">🏆</span> 이달의 상 &amp; 랭킹</h1>
-      <p class="subtitle">비공개 프로필 회원도 집계에는 포함되며, 시상 노출에 동의한 경우에만 닉네임이 표시돼요. (프로필 페이지에서 변경 가능)</p>
+    <header class="page-head reveal">
+      <span class="eyebrow">🏆 Awards</span>
+      <h1 class="page-title">이달의 상 &amp; 랭킹</h1>
+      <p class="subtitle" id="monthLabel"></p>
+      <p class="hint">
+        비공개 프로필 회원도 집계에는 포함되며, 시상 노출에 동의한 경우에만 닉네임이 표시돼요.
+        (프로필 페이지에서 변경 가능)
+      </p>
     </header>
 
-    <div id="awardWrap"></div>
+    <div id="awardWrap" class="stack"></div>
   </main>
 
-  <div id="toast"></div>
+  <div id="toast" role="status" aria-live="polite"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="js/config.js"></script>

@@ -1,8 +1,8 @@
 let isAdmin = false;
 
 const SUSPICIOUS_BALL_COUNT = 500; // 하루 500개 초과면 이상치로 플래깅
-const SUSPICIOUS_SCORE_MIN = 50; // 이보다 낮은 토탈 스코어는 오타 가능성으로 플래깅
-const SUSPICIOUS_SCORE_MAX = 200; // 이보다 높은 토탈 스코어도 오타 가능성으로 플래깅
+const SUSPICIOUS_SCORE_MIN = 50; // 이보다 낮은 토탈 스코어는 오타 가능성
+const SUSPICIOUS_SCORE_MAX = 200; // 이보다 높은 토탈 스코어도 오타 가능성
 
 (async function init() {
   const session = await JoyGolf.requireSession();
@@ -12,19 +12,54 @@ const SUSPICIOUS_SCORE_MAX = 200; // 이보다 높은 토탈 스코어도 오타
 
   JoyGolf.renderNav("admin", { isAdmin });
 
+  document.getElementById("notAdmin").hidden = isAdmin;
+  document.getElementById("adminContent").hidden = !isAdmin;
   if (!isAdmin) {
-    document.getElementById("notAdmin").style.display = "block";
     JoyGolf.revealCards();
     return;
   }
-  document.getElementById("adminContent").style.display = "block";
+
+  document.getElementById("practiceQueue").innerHTML = JoyGolf.skeleton(2);
+  document.getElementById("scoreQueue").innerHTML = JoyGolf.skeleton(2);
 
   await Promise.all([loadPracticeQueue(), loadScoreQueue()]);
   JoyGolf.revealCards();
 })().catch((err) => JoyGolf.fatal(err));
 
+// 대기열 항목의 작성자 프로필을 한 번에 가져온다
+async function profileMapFor(logs) {
+  const userIds = [...new Set(logs.map((l) => l.user_id))];
+  if (!userIds.length) return {};
+  const { data } = await sb.from("profiles").select("id, display_name, avatar_emoji").in("id", userIds);
+  return Object.fromEntries((data || []).map((p) => [p.id, p]));
+}
+
+function queueItem({ author, headline, suspicious, note, photoUrl, approve, reject }) {
+  return `
+    <div class="list-item">
+      <div class="list-item-head">
+        <span class="list-item-title">
+          ${author ? author.avatar_emoji : "🏌️"}
+          <strong>${author ? JoyGolf.escapeHtml(author.display_name) : "알 수 없음"}</strong>
+        </span>
+        ${suspicious ? `<span class="badge badge-danger">⚠️ 이상치 의심</span>` : ""}
+      </div>
+      <p class="hint">${headline}</p>
+      ${note ? `<p class="hint">💬 ${JoyGolf.escapeHtml(note)}</p>` : ""}
+      ${
+        photoUrl
+          ? `<img src="${photoUrl}" class="proof-thumb" alt="인증샷" loading="lazy" />`
+          : `<p class="hint">📷 사진 없음</p>`
+      }
+      <div class="list-item-actions">
+        <button class="btn btn-sm" onclick="${approve}">✅ 승인</button>
+        <button class="btn btn-sm btn-danger" onclick="${reject}">✖ 반려</button>
+      </div>
+    </div>`;
+}
+
 async function loadPracticeQueue() {
-  const { data: logs, error } = await sb
+  const { data, error } = await sb
     .from("practice_logs")
     .select("*")
     .eq("verified", false)
@@ -32,49 +67,40 @@ async function loadPracticeQueue() {
 
   const el = document.getElementById("practiceQueue");
   const empty = document.getElementById("practiceEmpty");
-  document.getElementById("practiceCount").textContent = logs?.length || 0;
 
   // 운영진 화면에서 실패가 "대기열 비어있음"으로 보이면 승인이 밀린 걸 모르고 지나친다
   if (error) {
-    empty.style.display = "none";
+    document.getElementById("practiceCount").textContent = "0";
+    empty.hidden = true;
     el.innerHTML = JoyGolf.errorState("연습 인증 대기열을 불러오지 못했어요", error);
     return;
   }
-  if (!logs || !logs.length) {
-    empty.style.display = "block";
-    el.innerHTML = "";
-    return;
-  }
-  empty.style.display = "none";
 
-  const userIds = [...new Set(logs.map((l) => l.user_id))];
-  // 이름 표시용 보조 조회 — 실패해도 본문은 그대로 보여주고 이름만 대체 표기한다
-  const { data: profiles } = await sb.from("profiles").select("id, display_name, avatar_emoji").in("id", userIds);
-  const profileMap = Object.fromEntries((profiles || []).map((p) => [p.id, p]));
+  const logs = data || [];
+  document.getElementById("practiceCount").textContent = logs.length;
+  empty.hidden = logs.length > 0;
+
+  const profiles = await profileMapFor(logs);
 
   el.innerHTML = logs
-    .map((p) => {
-      const author = profileMap[p.user_id];
-      const suspicious = p.ball_count > SUSPICIOUS_BALL_COUNT;
-      return `
-      <div class="list-item">
-        <div class="list-item-head">
-          <span>${author ? author.avatar_emoji : "🏌️"} <strong>${author ? JoyGolf.escapeHtml(author.display_name) : "알 수 없음"}</strong> · ${JoyGolf.formatDate(p.practice_date)} · 공 ${p.ball_count}개 ${p.location ? "· " + JoyGolf.escapeHtml(p.location) : ""}</span>
-          ${suspicious ? `<span class="badge badge-orange">⚠️ 이상치 의심</span>` : ""}
-        </div>
-        ${p.note ? `<div class="hint">${JoyGolf.escapeHtml(p.note)}</div>` : ""}
-        ${p.photo_url ? `<img src="${p.photo_url}" class="proof-thumb" alt="인증샷" />` : `<p class="hint">사진 없음</p>`}
-        <div style="margin-top:8px; display:flex; gap:8px;">
-          <button class="btn btn-sm" onclick="approvePractice('${p.id}')">✅ 승인</button>
-          <button class="btn btn-sm btn-danger" onclick="rejectPractice('${p.id}')">✖ 반려</button>
-        </div>
-      </div>`;
-    })
+    .map((p) =>
+      queueItem({
+        author: profiles[p.user_id],
+        headline: `🏋️ ${JoyGolf.formatDate(p.practice_date)} · 공 ${p.ball_count.toLocaleString()}개${
+          p.location ? " · " + JoyGolf.escapeHtml(p.location) : ""
+        }`,
+        suspicious: p.ball_count > SUSPICIOUS_BALL_COUNT,
+        note: p.note,
+        photoUrl: p.photo_url,
+        approve: `approvePractice('${p.id}')`,
+        reject: `rejectPractice('${p.id}')`,
+      })
+    )
     .join("");
 }
 
 async function loadScoreQueue() {
-  const { data: logs, error } = await sb
+  const { data, error } = await sb
     .from("score_logs")
     .select("*")
     .eq("verified", false)
@@ -82,43 +108,34 @@ async function loadScoreQueue() {
 
   const el = document.getElementById("scoreQueue");
   const empty = document.getElementById("scoreEmpty");
-  document.getElementById("scoreCount").textContent = logs?.length || 0;
 
   if (error) {
-    empty.style.display = "none";
+    document.getElementById("scoreCount").textContent = "0";
+    empty.hidden = true;
     el.innerHTML = JoyGolf.errorState("스코어 인증 대기열을 불러오지 못했어요", error);
     return;
   }
-  if (!logs || !logs.length) {
-    empty.style.display = "block";
-    el.innerHTML = "";
-    return;
-  }
-  empty.style.display = "none";
 
-  const userIds = [...new Set(logs.map((l) => l.user_id))];
-  // 이름 표시용 보조 조회 — 실패해도 본문은 그대로 보여주고 이름만 대체 표기한다
-  const { data: profiles } = await sb.from("profiles").select("id, display_name, avatar_emoji").in("id", userIds);
-  const profileMap = Object.fromEntries((profiles || []).map((p) => [p.id, p]));
+  const logs = data || [];
+  document.getElementById("scoreCount").textContent = logs.length;
+  empty.hidden = logs.length > 0;
+
+  const profiles = await profileMapFor(logs);
 
   el.innerHTML = logs
-    .map((s) => {
-      const author = profileMap[s.user_id];
-      const suspicious = s.total_score < SUSPICIOUS_SCORE_MIN || s.total_score > SUSPICIOUS_SCORE_MAX;
-      return `
-      <div class="list-item">
-        <div class="list-item-head">
-          <span>${author ? author.avatar_emoji : "⛳"} <strong>${author ? JoyGolf.escapeHtml(author.display_name) : "알 수 없음"}</strong> · ${JoyGolf.formatDate(s.round_date)} · ${s.total_score}타 ${s.course_name ? "· " + JoyGolf.escapeHtml(s.course_name) : ""}</span>
-          ${suspicious ? `<span class="badge badge-orange">⚠️ 이상치 의심</span>` : ""}
-        </div>
-        ${s.note ? `<div class="hint">${JoyGolf.escapeHtml(s.note)}</div>` : ""}
-        ${s.photo_url ? `<img src="${s.photo_url}" class="proof-thumb" alt="스코어카드" />` : `<p class="hint">사진 없음</p>`}
-        <div style="margin-top:8px; display:flex; gap:8px;">
-          <button class="btn btn-sm" onclick="approveScore('${s.id}')">✅ 승인</button>
-          <button class="btn btn-sm btn-danger" onclick="rejectScore('${s.id}')">✖ 반려</button>
-        </div>
-      </div>`;
-    })
+    .map((s) =>
+      queueItem({
+        author: profiles[s.user_id],
+        headline: `⛳ ${JoyGolf.formatDate(s.round_date)} · ${s.total_score}타${
+          s.course_name ? " · " + JoyGolf.escapeHtml(s.course_name) : ""
+        }`,
+        suspicious: s.total_score < SUSPICIOUS_SCORE_MIN || s.total_score > SUSPICIOUS_SCORE_MAX,
+        note: s.note,
+        photoUrl: s.photo_url,
+        approve: `approveScore('${s.id}')`,
+        reject: `rejectScore('${s.id}')`,
+      })
+    )
     .join("");
 }
 

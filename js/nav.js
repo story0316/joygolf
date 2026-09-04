@@ -1,67 +1,127 @@
-// 공통 플로팅 글래스 네비게이션 (모바일에서는 하단 독으로 전환)
+// ============================================================
+// 공통 네비게이션
+//  - 데스크톱: 상단 글래스 바 + 알약 링크
+//  - 모바일  : 상단 바(로고/테마) + 하단 탭바 + "더보기" 시트
+// ============================================================
 JoyGolf.renderNav = function renderNav(activePage, options) {
-  const links = [
-    { href: "dashboard.html", label: "🏠 대시보드", short: "🏠", key: "dashboard" },
-    { href: "practice.html", label: "🏋️ 연습", short: "🏋️", key: "practice" },
-    { href: "score.html", label: "⛳ 스코어", short: "⛳", key: "score" },
-    { href: "meetup.html", label: "📅 모임", short: "📅", key: "meetup" },
-    { href: "board.html", label: "📝 게시판", short: "📝", key: "board" },
-    { href: "ranking.html", label: "🏆 랭킹", short: "🏆", key: "ranking" },
-    { href: "profile.html", label: "⚙️ 프로필", short: "⚙️", key: "profile" },
+  const isAdmin = !!(options && options.isAdmin);
+
+  // 하단 탭바에 노출할 주요 메뉴 4개
+  const primary = [
+    { href: "dashboard.html", icon: "🏠", label: "대시보드", short: "홈", key: "dashboard" },
+    { href: "practice.html", icon: "🏋️", label: "연습인증", short: "연습", key: "practice" },
+    { href: "score.html", icon: "⛳", label: "스코어인증", short: "스코어", key: "score" },
+    { href: "meetup.html", icon: "📅", label: "모임", short: "모임", key: "meetup" },
   ];
 
-  if (options && options.isAdmin) {
-    links.push({ href: "admin.html", label: "🛡️ 운영진", short: "🛡️", key: "admin" });
+  // 데스크톱 상단 바에는 함께, 모바일에서는 "더보기" 시트에 들어갈 메뉴
+  const secondary = [
+    { href: "board.html", icon: "📝", label: "후기게시판", key: "board" },
+    { href: "ranking.html", icon: "🏆", label: "랭킹/이달의상", key: "ranking" },
+    { href: "profile.html", icon: "⚙️", label: "프로필", key: "profile" },
+  ];
+
+  if (isAdmin) {
+    secondary.push({ href: "admin.html", icon: "🛡️", label: "운영진", key: "admin" });
   }
 
-  const el = document.getElementById("navbar");
-  if (!el) return;
+  const all = [...primary, ...secondary];
+  const inSheet = secondary.some((l) => l.key === activePage);
 
-  const isDark = window.JoyTheme && JoyTheme.current() === "dark";
+  const host = document.getElementById("navbar");
+  if (!host) return;
 
-  // 데스크톱 상단바와 모바일 하단 독을 분리해서 렌더한다.
-  // (.nav-inner 의 backdrop-filter 가 fixed 자식의 컨테이닝 블록이 되어버리므로
-  //  독은 반드시 .nav-inner 바깥, #navbar 의 직계 자식이어야 뷰포트 기준으로 붙는다)
-  el.innerHTML = `
-    <nav class="nav-inner" aria-label="주요 메뉴">
-      <a href="dashboard.html" class="nav-logo"><span class="dot"></span>JoyGolf</a>
-      <div class="nav-links">
-        ${links
-          .map(
-            (l) =>
-              `<a href="${l.href}" class="nav-link ${l.key === activePage ? "active" : ""}">${l.label}</a>`
-          )
-          .join("")}
-      </div>
-      <div class="nav-tools">
-        <button id="themeBtn" class="icon-btn" aria-label="테마 전환" title="라이트/다크 전환">${isDark ? "☀️" : "🌙"}</button>
-        <button id="logoutBtn" class="icon-btn" aria-label="로그아웃" title="로그아웃">🚪</button>
+  const isDark = JoyTheme.current() === "dark";
+
+  const navLink = (l) =>
+    `<a href="${l.href}" class="nav-link${l.key === activePage ? " active" : ""}">${l.icon} ${l.label}</a>`;
+
+  const tab = (l) =>
+    `<a href="${l.href}" class="tab${l.key === activePage ? " active" : ""}">
+       <span class="tab-icon">${l.icon}</span>${l.short}
+     </a>`;
+
+  const sheetLink = (l) =>
+    `<a href="${l.href}" class="sheet-link${l.key === activePage ? " active" : ""}">
+       <span>${l.icon}</span>${l.label}
+     </a>`;
+
+  host.innerHTML = `
+    <nav class="nav">
+      <div class="nav-inner">
+        <a href="dashboard.html" class="nav-logo">
+          <span class="mark">⛳</span>JoyGolf
+        </a>
+
+        <div class="nav-links">${all.map(navLink).join("")}</div>
+
+        <div class="nav-actions">
+          <button id="themeToggle" class="icon-btn" type="button" aria-label="테마 전환">${isDark ? "☀️" : "🌙"}</button>
+          <button id="logoutBtn" class="icon-btn" type="button" aria-label="로그아웃">🚪</button>
+        </div>
       </div>
     </nav>
-    <nav class="nav-dock" aria-label="모바일 메뉴">
-      ${links
-        .map(
-          (l) => `<a href="${l.href}" class="dock-link ${l.key === activePage ? "active" : ""}">
-            <span class="dock-ico">${l.short}</span>
-            <span class="dock-label">${l.label.replace(/^\S+\s/, "")}</span>
-          </a>`
-        )
-        .join("")}
-    </nav>
+
+    <div class="tabbar">
+      ${primary.map(tab).join("")}
+      <button id="moreBtn" class="tab${inSheet ? " active" : ""}" type="button" aria-haspopup="dialog" aria-expanded="false">
+        <span class="tab-icon">⋯</span>더보기
+      </button>
+    </div>
+
+    <div class="sheet-backdrop" id="sheetBackdrop"></div>
+    <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="더보기 메뉴">
+      <div class="sheet-grip"></div>
+      ${secondary.map(sheetLink).join("")}
+      <button class="sheet-link" id="sheetTheme" type="button"><span>🎨</span>테마 전환</button>
+      <button class="sheet-link danger" id="sheetLogout" type="button"><span>🚪</span>로그아웃</button>
+    </div>
   `;
 
-  document.getElementById("themeBtn").addEventListener("click", (e) => {
+  // 활성 링크가 가로 스크롤 밖에 있으면 보이도록 스크롤
+  const active = host.querySelector(".nav-link.active");
+  if (active) active.scrollIntoView({ block: "nearest", inline: "center" });
+
+  // ---- 테마 전환 ----
+  const themeBtn = document.getElementById("themeToggle");
+  themeBtn.addEventListener("click", () => {
     const next = JoyTheme.toggle();
-    e.currentTarget.textContent = next === "dark" ? "☀️" : "🌙";
+    themeBtn.textContent = next === "dark" ? "☀️" : "🌙";
   });
 
-  document.getElementById("logoutBtn").addEventListener("click", async () => {
+  // ---- 더보기 시트 ----
+  const sheet = document.getElementById("sheet");
+  const backdrop = document.getElementById("sheetBackdrop");
+  const moreBtn = document.getElementById("moreBtn");
+
+  function setSheet(open) {
+    sheet.classList.toggle("open", open);
+    backdrop.classList.toggle("open", open);
+    moreBtn.setAttribute("aria-expanded", String(open));
+  }
+
+  moreBtn.addEventListener("click", () => setSheet(!sheet.classList.contains("open")));
+  backdrop.addEventListener("click", () => setSheet(false));
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") setSheet(false);
+  });
+
+  document.getElementById("sheetTheme").addEventListener("click", () => {
+    themeBtn.click();
+    setSheet(false);
+  });
+
+  // ---- 로그아웃 ----
+  async function logout() {
     await sb.auth.signOut();
     window.location.href = "index.html";
-  });
+  }
+
+  document.getElementById("logoutBtn").addEventListener("click", logout);
+  document.getElementById("sheetLogout").addEventListener("click", logout);
 };
 
-// 카드가 순차적으로 떠오르는 진입 애니메이션
+// 카드가 순차적으로 떠오르는 진입 애니메이션 (데이터 로딩이 끝난 뒤 각 페이지에서 호출)
 JoyGolf.revealCards = function revealCards() {
   document.querySelectorAll(".container .card, .container .award-card").forEach((el, i) => {
     el.style.setProperty("--i", i);

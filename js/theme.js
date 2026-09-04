@@ -1,4 +1,4 @@
-// 라이트/다크 테마 관리 (system 기본, 사용자가 고르면 localStorage에 저장)
+// 라이트/다크 테마 관리 (system 기본값을 따르고, 사용자가 고르면 localStorage에 저장)
 window.JoyTheme = (function () {
   const KEY = "joygolf-theme";
 
@@ -47,3 +47,10 @@ window.JoyTheme = (function () {
 
   return { current, set, toggle };
 })();
+
+window.JoyGolf = window.JoyGolf || {};
+
+// Chart.js처럼 색을 문자열로 받아야 하는 곳에서 디자인 토큰을 읽어갈 때 쓴다.
+JoyGolf.cssVar = function cssVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+};

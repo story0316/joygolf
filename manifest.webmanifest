@@ -7,9 +7,13 @@
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f4f7f4",
+  "background_color": "#080d0b",
   "theme_color": "#10b981",
-  "categories": ["sports", "social", "lifestyle"],
+  "categories": [
+    "sports",
+    "social",
+    "lifestyle"
+  ],
   "icons": [
     {
       "src": "icons/icon-192.png",
@@ -35,19 +39,34 @@
       "name": "연습 인증하기",
       "short_name": "연습 인증",
       "url": "./practice.html",
-      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
     },
     {
       "name": "스코어 인증하기",
       "short_name": "스코어 인증",
       "url": "./score.html",
-      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
     },
     {
       "name": "모임 보기",
       "short_name": "모임",
       "url": "./meetup.html",
-      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
     }
   ]
 }
