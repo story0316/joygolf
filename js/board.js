@@ -9,7 +9,8 @@ let currentUserId = null;
 
   document.getElementById("postList").innerHTML = JoyGolf.skeleton(3);
   await loadPosts();
-})();
+  JoyGolf.revealCards();
+})().catch((err) => JoyGolf.fatal(err));
 
 document.getElementById("postForm").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -49,9 +50,18 @@ async function loadPosts() {
     .limit(50);
 
   const el = document.getElementById("postList");
-  const rows = error ? [] : posts || [];
+  const empty = document.getElementById("postEmpty");
 
-  document.getElementById("postEmpty").hidden = rows.length > 0;
+  // 실패와 "그냥 비어있음"은 다르게 보여준다 — 실패를 빈 상태로 보여주면
+  // 회원은 자기 글이 사라졌다고 생각한다.
+  if (error) {
+    empty.hidden = true;
+    el.innerHTML = JoyGolf.errorState("게시글을 불러오지 못했어요", error);
+    return;
+  }
+
+  const rows = posts || [];
+  empty.hidden = rows.length > 0;
 
   if (!rows.length) {
     el.innerHTML = "";
@@ -65,7 +75,8 @@ async function loadPosts() {
     sb.from("comments").select("*").in("post_id", postIds).order("created_at", { ascending: true }),
   ]);
 
-  // 글 작성자뿐 아니라 댓글 작성자 프로필까지 함께 조회해야 댓글에 "익명"이 뜨지 않는다
+  // 글 작성자뿐 아니라 댓글 작성자 프로필까지 함께 조회해야 댓글에 "익명"이 뜨지 않는다.
+  // 이 조회가 실패해도 본문은 그대로 보여주고 이름만 대체 표기한다.
   const userIds = [...new Set([...rows.map((p) => p.user_id), ...(comments || []).map((c) => c.user_id)])];
   const { data: profiles } = await sb.from("profiles").select("id, display_name, avatar_emoji").in("id", userIds);
 

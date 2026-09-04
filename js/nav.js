@@ -31,6 +31,8 @@ JoyGolf.renderNav = function renderNav(activePage, options) {
   const host = document.getElementById("navbar");
   if (!host) return;
 
+  const isDark = JoyTheme.current() === "dark";
+
   const navLink = (l) =>
     `<a href="${l.href}" class="nav-link${l.key === activePage ? " active" : ""}">${l.icon} ${l.label}</a>`;
 
@@ -54,7 +56,7 @@ JoyGolf.renderNav = function renderNav(activePage, options) {
         <div class="nav-links">${all.map(navLink).join("")}</div>
 
         <div class="nav-actions">
-          <button id="themeToggle" class="icon-btn" type="button">🌙</button>
+          <button id="themeToggle" class="icon-btn" type="button" aria-label="테마 전환">${isDark ? "☀️" : "🌙"}</button>
           <button id="logoutBtn" class="icon-btn" type="button" aria-label="로그아웃">🚪</button>
         </div>
       </div>
@@ -76,11 +78,16 @@ JoyGolf.renderNav = function renderNav(activePage, options) {
     </div>
   `;
 
-  JoyGolf.bindThemeToggle(document.getElementById("themeToggle"));
-
   // 활성 링크가 가로 스크롤 밖에 있으면 보이도록 스크롤
   const active = host.querySelector(".nav-link.active");
   if (active) active.scrollIntoView({ block: "nearest", inline: "center" });
+
+  // ---- 테마 전환 ----
+  const themeBtn = document.getElementById("themeToggle");
+  themeBtn.addEventListener("click", () => {
+    const next = JoyTheme.toggle();
+    themeBtn.textContent = next === "dark" ? "☀️" : "🌙";
+  });
 
   // ---- 더보기 시트 ----
   const sheet = document.getElementById("sheet");
@@ -100,7 +107,7 @@ JoyGolf.renderNav = function renderNav(activePage, options) {
   });
 
   document.getElementById("sheetTheme").addEventListener("click", () => {
-    document.getElementById("themeToggle").click();
+    themeBtn.click();
     setSheet(false);
   });
 
@@ -112,4 +119,12 @@ JoyGolf.renderNav = function renderNav(activePage, options) {
 
   document.getElementById("logoutBtn").addEventListener("click", logout);
   document.getElementById("sheetLogout").addEventListener("click", logout);
+};
+
+// 카드가 순차적으로 떠오르는 진입 애니메이션 (데이터 로딩이 끝난 뒤 각 페이지에서 호출)
+JoyGolf.revealCards = function revealCards() {
+  document.querySelectorAll(".container .card, .container .award-card").forEach((el, i) => {
+    el.style.setProperty("--i", i);
+    el.classList.add("reveal");
+  });
 };

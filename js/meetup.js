@@ -21,7 +21,8 @@ const typeMeta = {
 
   document.getElementById("meetupList").innerHTML = JoyGolf.skeleton(3);
   await loadList();
-})();
+  JoyGolf.revealCards();
+})().catch((err) => JoyGolf.fatal(err));
 
 document.getElementById("meetupForm").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -68,9 +69,17 @@ async function loadList() {
     .order("meetup_date", { ascending: true });
 
   const el = document.getElementById("meetupList");
-  const rows = error ? [] : meetups || [];
+  const empty = document.getElementById("meetupEmpty");
 
-  document.getElementById("meetupEmpty").hidden = rows.length > 0;
+  if (error) {
+    empty.hidden = true;
+    document.getElementById("meetupTotal").textContent = "0개";
+    el.innerHTML = JoyGolf.errorState("모임 목록을 불러오지 못했어요", error);
+    return;
+  }
+
+  const rows = meetups || [];
+  empty.hidden = rows.length > 0;
   document.getElementById("meetupTotal").textContent = `${rows.length}개`;
 
   if (!rows.length) {

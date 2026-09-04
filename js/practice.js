@@ -10,7 +10,8 @@ let currentUserId = null;
   document.getElementById("practiceDate").valueAsDate = new Date();
   document.getElementById("practiceList").innerHTML = JoyGolf.skeleton(4);
   await loadList();
-})();
+  JoyGolf.revealCards();
+})().catch((err) => JoyGolf.fatal(err));
 
 document.getElementById("practiceForm").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -54,9 +55,18 @@ async function loadList() {
     .limit(30);
 
   const el = document.getElementById("practiceList");
-  const logs = error ? [] : data || [];
+  const empty = document.getElementById("practiceEmpty");
 
-  document.getElementById("practiceEmpty").hidden = logs.length > 0;
+  // 조회 실패를 "기록 없음"으로 보여주면 회원은 기록이 사라졌다고 오해한다
+  if (error) {
+    empty.hidden = true;
+    document.getElementById("practiceTotal").textContent = "0건";
+    el.innerHTML = JoyGolf.errorState("연습 기록을 불러오지 못했어요", error);
+    return;
+  }
+
+  const logs = data || [];
+  empty.hidden = logs.length > 0;
   document.getElementById("practiceTotal").textContent = `${logs.length}건`;
 
   el.innerHTML = logs

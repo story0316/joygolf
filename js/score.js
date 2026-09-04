@@ -10,7 +10,8 @@ let currentUserId = null;
   document.getElementById("roundDate").valueAsDate = new Date();
   document.getElementById("scoreList").innerHTML = JoyGolf.skeleton(4);
   await loadList();
-})();
+  JoyGolf.revealCards();
+})().catch((err) => JoyGolf.fatal(err));
 
 document.getElementById("scoreForm").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -66,9 +67,17 @@ async function loadList() {
     .limit(30);
 
   const el = document.getElementById("scoreList");
-  const logs = error ? [] : data || [];
+  const empty = document.getElementById("scoreEmpty");
 
-  document.getElementById("scoreEmpty").hidden = logs.length > 0;
+  if (error) {
+    empty.hidden = true;
+    document.getElementById("scoreTotal").textContent = "0건";
+    el.innerHTML = JoyGolf.errorState("스코어 기록을 불러오지 못했어요", error);
+    return;
+  }
+
+  const logs = data || [];
+  empty.hidden = logs.length > 0;
   document.getElementById("scoreTotal").textContent = `${logs.length}건`;
 
   el.innerHTML = logs

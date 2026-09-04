@@ -1,50 +1,56 @@
-// ============================================================
-// 테마(다크/라이트) 관리
-// 초기 테마는 각 페이지 <head>의 인라인 스크립트가 이미 확정해 둔다.
-// 여기서는 전환 버튼 바인딩과, JS에서 색 토큰을 읽는 헬퍼만 담당한다.
-// ============================================================
-(function () {
-  window.JoyGolf = window.JoyGolf || {};
+// 라이트/다크 테마 관리 (system 기본값을 따르고, 사용자가 고르면 localStorage에 저장)
+window.JoyTheme = (function () {
+  const KEY = "joygolf-theme";
 
-  const STORAGE_KEY = "joygolf-theme";
-  const root = document.documentElement;
-
-  function current() {
-    return root.getAttribute("data-theme") === "light" ? "light" : "dark";
+  function stored() {
+    try {
+      return localStorage.getItem(KEY);
+    } catch (e) {
+      return null;
+    }
   }
 
-  function syncLabel(btn) {
-    const light = current() === "light";
-    btn.textContent = light ? "☀️" : "🌙";
-    btn.setAttribute("aria-label", light ? "다크 모드로 전환" : "라이트 모드로 전환");
+  function systemPrefersDark() {
+    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  }
+
+  // 현재 실제로 적용된 테마
+  function current() {
+    const s = stored();
+    if (s === "dark" || s === "light") return s;
+    return systemPrefersDark() ? "dark" : "light";
   }
 
   function apply(theme) {
-    root.setAttribute("data-theme", theme);
-    try {
-      localStorage.setItem(STORAGE_KEY, theme);
-    } catch (e) {
-      /* 시크릿 모드 등에서 저장이 막혀도 전환 자체는 동작해야 한다 */
-    }
-    document.querySelectorAll("[data-theme-toggle]").forEach(syncLabel);
-    window.dispatchEvent(new CustomEvent("joygolf:themechange", { detail: { theme } }));
+    document.documentElement.setAttribute("data-theme", theme);
   }
 
-  JoyGolf.currentTheme = current;
+  function set(theme) {
+    try {
+      localStorage.setItem(KEY, theme);
+    } catch (e) {
+      /* 프라이빗 모드 등에서 저장 실패해도 화면 전환은 유지 */
+    }
+    apply(theme);
+    document.dispatchEvent(new CustomEvent("joygolf:themechange", { detail: { theme } }));
+  }
 
-  JoyGolf.bindThemeToggle = function bindThemeToggle(btn) {
-    if (!btn || btn.dataset.themeToggle) return;
-    btn.dataset.themeToggle = "1";
-    syncLabel(btn);
-    btn.addEventListener("click", () => apply(current() === "light" ? "dark" : "light"));
-  };
+  function toggle() {
+    const next = current() === "dark" ? "light" : "dark";
+    set(next);
+    return next;
+  }
 
-  // Chart.js처럼 색을 문자열로 받아야 하는 곳에서 디자인 토큰을 읽어간다.
-  JoyGolf.cssVar = function cssVar(name) {
-    return getComputedStyle(root).getPropertyValue(name).trim();
-  };
+  // 저장값이 있으면 즉시 반영 (head 인라인 스크립트가 이미 처리하지만 안전망)
+  const s = stored();
+  if (s === "dark" || s === "light") apply(s);
 
-  document.addEventListener("DOMContentLoaded", () => {
-    document.querySelectorAll("#themeToggle").forEach(JoyGolf.bindThemeToggle);
-  });
+  return { current, set, toggle };
 })();
+
+window.JoyGolf = window.JoyGolf || {};
+
+// Chart.js처럼 색을 문자열로 받아야 하는 곳에서 디자인 토큰을 읽어갈 때 쓴다.
+JoyGolf.cssVar = function cssVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+};

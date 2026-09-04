@@ -1,0 +1,72 @@
+{
+  "name": "JoyGolf — 사내 골프 동호회",
+  "short_name": "JoyGolf",
+  "description": "연습 인증하고, 스코어 올리고, 같이 라운딩 약속까지 잡는 사내 골프 동호회 앱",
+  "lang": "ko",
+  "start_url": "./dashboard.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#080d0b",
+  "theme_color": "#10b981",
+  "categories": [
+    "sports",
+    "social",
+    "lifestyle"
+  ],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "연습 인증하기",
+      "short_name": "연습 인증",
+      "url": "./practice.html",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "스코어 인증하기",
+      "short_name": "스코어 인증",
+      "url": "./score.html",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "모임 보기",
+      "short_name": "모임",
+      "url": "./meetup.html",
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}

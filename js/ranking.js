@@ -39,7 +39,7 @@ const medals = ["🥇", "🥈", "🥉"];
       const rows = (byType[type] || []).sort((a, b) => a.rank - b.rank);
 
       return `
-      <section class="award-card reveal">
+      <section class="award-card">
         <div class="award-title">
           <span class="card-icon">${meta.icon}</span>
           이달의 ${type}
@@ -64,4 +64,6 @@ const medals = ["🥇", "🥈", "🥉"];
       </section>`;
     })
     .join("");
-})();
+
+  JoyGolf.revealCards();
+})().catch((err) => JoyGolf.fatal(err));

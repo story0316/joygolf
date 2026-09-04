@@ -1,5 +1,6 @@
 let radarChart = null;
 let radarState = null; // 테마 전환 시 같은 데이터로 다시 그리기 위해 보관
+let trendState = null;
 
 (async function init() {
   const session = await JoyGolf.requireSession();
@@ -17,19 +18,44 @@ let radarState = null; // 테마 전환 시 같은 데이터로 다시 그리기
   document.getElementById("recentActivity").innerHTML = JoyGolf.skeleton(3);
   document.getElementById("upcomingMeetups").innerHTML = JoyGolf.skeleton(2);
 
-  const [{ data: practiceLogs }, { data: scoreLogs }, { data: meetups }] = await Promise.all([
+  const [practiceRes, scoreRes, meetupRes] = await Promise.all([
     sb.from("practice_logs").select("*").eq("user_id", user.id).order("practice_date", { ascending: false }),
     sb.from("score_logs").select("*").eq("user_id", user.id).order("round_date", { ascending: false }),
     sb.from("meetups").select("*").gte("meetup_date", new Date().toISOString()).order("meetup_date").limit(3),
   ]);
 
-  renderLevel(practiceLogs || [], scoreLogs || []);
-  renderStatTiles(practiceLogs || [], scoreLogs || []);
-  renderBadges(practiceLogs || [], scoreLogs || []);
-  renderRecentActivity(practiceLogs || [], scoreLogs || []);
-  renderUpcomingMeetups(meetups || []);
-  await loadRadar(user.id);
-})();
+  // 연습/스코어는 레벨·배지·차트 전부의 입력이라, 실패했는데 0으로 그리면
+  // "기록이 다 날아갔다"로 보인다. 이건 페이지 단위 오류로 올린다.
+  if (practiceRes.error) throw new Error("연습 기록을 불러오지 못했어요: " + practiceRes.error.message);
+  if (scoreRes.error) throw new Error("스코어 기록을 불러오지 못했어요: " + scoreRes.error.message);
+
+  const practiceLogs = practiceRes.data || [];
+  const scoreLogs = scoreRes.data || [];
+
+  // 모임은 대시보드의 곁가지라, 실패해도 나머지는 보여주고 그 카드에만 표시한다
+  if (meetupRes.error) {
+    document.getElementById("meetupEmpty").hidden = true;
+    document.getElementById("upcomingMeetups").innerHTML =
+      JoyGolf.errorState("모임을 불러오지 못했어요", meetupRes.error);
+  } else {
+    renderUpcomingMeetups(meetupRes.data || []);
+  }
+
+  renderLevel(practiceLogs, scoreLogs);
+  renderStatTiles(practiceLogs, scoreLogs);
+  renderBadges(practiceLogs, scoreLogs);
+  renderRecentActivity(practiceLogs, scoreLogs);
+  renderScoreTrend(scoreLogs);
+  await renderRadar(user.id);
+
+  JoyGolf.revealCards();
+
+  // 테마를 바꾸면 차트 색상도 따라가야 해서 다시 그린다
+  document.addEventListener("joygolf:themechange", () => {
+    drawTrend();
+    drawRadar();
+  });
+})().catch((err) => JoyGolf.fatal(err));
 
 function greetingByHour() {
   const h = new Date().getHours();
@@ -191,8 +217,133 @@ function renderUpcomingMeetups(meetups) {
     .join("");
 }
 
+/* ---------------- 차트 공통 ---------------- */
+
+// 두 차트가 공유하는 테마 색상
+function chartTheme() {
+  const isDark = window.JoyTheme && JoyTheme.current() === "dark";
+  return {
+    isDark,
+    gridColor: isDark ? "rgba(255, 255, 255, 0.09)" : "rgba(6, 46, 34, 0.09)",
+    labelColor: isDark ? "#93a79d" : "#556a61",
+    line: isDark ? "#34d399" : "#10b981",
+    fill: isDark ? "rgba(52, 211, 153, 0.18)" : "rgba(16, 185, 129, 0.16)",
+    pointBorder: isDark ? "#080d0b" : "#ffffff",
+  };
+}
+
+// 테마를 바꾸면 같은 캔버스에 다시 그리므로 기존 인스턴스를 먼저 정리한다
+function resetCanvas(id) {
+  const canvas = document.getElementById(id);
+  const existing = typeof Chart.getChart === "function" ? Chart.getChart(canvas) : null;
+  if (existing && typeof existing.destroy === "function") existing.destroy();
+  return canvas;
+}
+
+/* ---------------- 스코어 추이 ---------------- */
+function renderScoreTrend(scoreLogs) {
+  const hint = document.getElementById("trendHint");
+  const empty = document.getElementById("trendEmpty");
+  const canvas = document.getElementById("scoreTrendChart");
+
+  // 오래된 라운드부터 최근 12개
+  const rounds = scoreLogs
+    .slice()
+    .sort((a, b) => new Date(a.round_date) - new Date(b.round_date))
+    .slice(-12);
+
+  if (rounds.length < 2) {
+    empty.hidden = false;
+    canvas.closest(".chart-box").hidden = true;
+    hint.textContent = "라운드를 2회 이상 인증하면 성장 그래프가 그려져요.";
+    trendState = null;
+    return;
+  }
+
+  empty.hidden = true;
+  canvas.closest(".chart-box").hidden = false;
+
+  const toPar = rounds.map((r) => r.total_score - r.par);
+  const best = Math.min(...toPar);
+  const first = toPar[0];
+  const last = toPar[toPar.length - 1];
+  const delta = first - last; // 양수면 개선
+
+  hint.textContent =
+    delta > 0
+      ? `첫 기록 대비 ${delta.toFixed(0)}타 좋아졌어요! 베스트 +${best} 🎉`
+      : delta < 0
+        ? `첫 기록 대비 ${Math.abs(delta).toFixed(0)}타 늘었어요. 베스트 +${best} — 다시 달려봐요 💪`
+        : `기복 없이 유지 중이에요. 베스트 +${best}`;
+
+  trendState = { rounds, toPar };
+  drawTrend();
+}
+
+function drawTrend() {
+  if (!trendState) return;
+  const { rounds, toPar } = trendState;
+  const t = chartTheme();
+  const el = resetCanvas("scoreTrendChart");
+
+  new Chart(el, {
+    type: "line",
+    data: {
+      labels: rounds.map((r) => JoyGolf.formatDate(r.round_date)),
+      datasets: [
+        {
+          label: "파 대비 타수",
+          data: toPar,
+          borderColor: t.line,
+          backgroundColor: t.fill,
+          borderWidth: 2.5,
+          fill: true,
+          tension: 0.35,
+          pointBackgroundColor: "#a3e635",
+          pointBorderColor: t.pointBorder,
+          pointBorderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 900, easing: "easeOutQuart" },
+      interaction: { intersect: false, mode: "index" },
+      scales: {
+        y: {
+          // 타수는 낮을수록 좋으니 위로 갈수록 좋아지도록 뒤집는다
+          reverse: true,
+          grid: { color: t.gridColor },
+          border: { display: false },
+          ticks: { color: t.labelColor, font: { size: 11 }, callback: (v) => (v > 0 ? `+${v}` : v) },
+        },
+        x: {
+          grid: { display: false },
+          border: { display: false },
+          ticks: { color: t.labelColor, font: { size: 11 }, maxRotation: 0, autoSkipPadding: 12 },
+        },
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const r = rounds[ctx.dataIndex];
+              const d = ctx.parsed.y;
+              return `${r.total_score}타 (${d > 0 ? "+" + d : d})${r.course_name ? " · " + r.course_name : ""}`;
+            },
+          },
+        },
+      },
+    },
+  });
+}
+
 /* ---------------- 육각형 역량 ---------------- */
-async function loadRadar(userId) {
+async function renderRadar(userId) {
   const [{ data: radarRows }, { data: practiceRows }] = await Promise.all([
     sb.from("user_radar_raw").select("*"),
     sb.from("user_practice_raw").select("*"),
@@ -241,41 +392,20 @@ async function loadRadar(userId) {
   });
 
   document.getElementById("radarHint").textContent =
-    me || meP
-      ? "공개 프로필 회원들과 비교한 상대적 위치예요."
-      : "아직 인증 기록이 없어요. 인증을 등록하면 육각형이 채워져요!";
+    me || meP ? "공개 회원과 비교한 상대 위치" : "인증하면 육각형이 채워져요!";
 
   radarState = { labels: axes.map((a) => a.label), values };
   drawRadar();
-}
-
-// hex(#rgb/#rrggbb)를 rgba 문자열로. canvas fillStyle은 color-mix()를 못 읽는 브라우저가 있다.
-function withAlpha(color, alpha) {
-  const hex = String(color).trim();
-  const m3 = /^#([0-9a-f])([0-9a-f])([0-9a-f])$/i.exec(hex);
-  const m6 = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex);
-  let r, g, b;
-  if (m6) {
-    [r, g, b] = [m6[1], m6[2], m6[3]].map((h) => parseInt(h, 16));
-  } else if (m3) {
-    [r, g, b] = [m3[1], m3[2], m3[3]].map((h) => parseInt(h + h, 16));
-  } else {
-    return hex; // rgb()/named color 등은 그대로 넘긴다
-  }
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 function drawRadar() {
   if (!radarState) return;
   if (radarChart) radarChart.destroy();
 
-  // 색을 CSS 토큰에서 읽어와 다크/라이트 어느 쪽에서도 대비가 유지되게 한다
-  const accent = JoyGolf.cssVar("--accent") || "#34d399";
-  const lime = JoyGolf.cssVar("--lime") || "#a3e635";
-  const text = JoyGolf.cssVar("--text-muted") || "#93a79d";
-  const grid = JoyGolf.cssVar("--border") || "rgba(255,255,255,0.09)";
+  const t = chartTheme();
+  const canvas = resetCanvas("radarChart");
 
-  radarChart = new Chart(document.getElementById("radarChart"), {
+  radarChart = new Chart(canvas, {
     type: "radar",
     data: {
       labels: radarState.labels,
@@ -284,14 +414,14 @@ function drawRadar() {
           label: "내 역량",
           data: radarState.values,
           fill: true,
-          backgroundColor: withAlpha(accent, 0.22),
-          borderColor: accent,
+          backgroundColor: t.fill,
+          borderColor: t.line,
           borderWidth: 2,
-          pointBackgroundColor: lime,
-          pointBorderColor: accent,
+          pointBackgroundColor: "#a3e635",
+          pointBorderColor: t.pointBorder,
+          pointBorderWidth: 2,
           pointRadius: 4,
           pointHoverRadius: 6,
-          tension: 0.05,
         },
       ],
     },
@@ -304,15 +434,12 @@ function drawRadar() {
           min: 0,
           max: 100,
           ticks: { display: false, stepSize: 25 },
-          grid: { color: grid },
-          angleLines: { color: grid },
-          pointLabels: { color: text, font: { size: 12, weight: "600" } },
+          grid: { color: t.gridColor },
+          angleLines: { color: t.gridColor },
+          pointLabels: { color: t.labelColor, font: { size: 11, weight: "600" } },
         },
       },
       plugins: { legend: { display: false } },
     },
   });
 }
-
-// 테마가 바뀌면 차트 색도 따라가야 한다
-window.addEventListener("joygolf:themechange", drawRadar);

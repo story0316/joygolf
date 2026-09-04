@@ -5,8 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#080d0b" media="(prefers-color-scheme: dark)" />
   <meta name="theme-color" content="#f4f8f5" media="(prefers-color-scheme: light)" />
+  <meta name="description" content="JoyGolf — 사내 골프 동호회. 연습과 라운드를 인증하고, 육각형 역량과 레벨을 함께 키워요." />
   <title>프로필 | JoyGolf</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E⛳%3C/text%3E%3C/svg%3E" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="JoyGolf" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
   <link rel="stylesheet" href="css/style.css" />
@@ -33,7 +39,7 @@
     </header>
 
     <div class="bento">
-      <section class="card col-6 reveal">
+      <section class="card col-6">
         <div class="card-head">
           <span class="card-icon">🪪</span>
           <h3 class="flex-1">기본 정보</h3>
@@ -66,7 +72,7 @@
         </form>
       </section>
 
-      <section class="card col-6 reveal">
+      <section class="card col-6">
         <div class="card-head">
           <span class="card-icon">🔒</span>
           <div class="flex-1">
@@ -95,6 +101,22 @@
 
         <button id="savePrivacyBtn" class="btn btn-outline mt-16">공개 설정 저장</button>
       </section>
+
+      <section class="card col-12">
+        <div class="card-head">
+          <span class="card-icon">🔔</span>
+          <h3 class="flex-1">알림 설정</h3>
+          <span class="badge badge-gray" id="pushStatus">확인 중…</span>
+        </div>
+        <p class="hint" id="pushDesc">
+          모임 하루 전 리마인더, 인증 승인 결과, 이달의 상 발표를 푸시로 받아볼 수 있어요.
+          이 기기(브라우저)에서만 적용되며, 언제든 끌 수 있어요.
+        </p>
+        <div class="btn-row">
+          <button id="pushEnableBtn" class="btn btn-sm">🔔 이 기기에서 알림 받기</button>
+          <button id="pushDisableBtn" class="btn btn-sm btn-outline" style="display:none;">알림 끄기</button>
+        </div>
+      </section>
     </div>
   </main>
 
@@ -102,9 +124,11 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="js/config.js"></script>
-  <script src="js/supabaseClient.js"></script>
   <script src="js/theme.js"></script>
+  <script src="js/supabaseClient.js"></script>
   <script src="js/nav.js"></script>
+  <script src="js/push.js"></script>
   <script src="js/profile.js"></script>
+  <script src="js/pwa.js"></script>
 </body>
 </html>

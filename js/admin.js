@@ -14,13 +14,17 @@ const SUSPICIOUS_SCORE_MAX = 200; // 이보다 높은 토탈 스코어도 오타
 
   document.getElementById("notAdmin").hidden = isAdmin;
   document.getElementById("adminContent").hidden = !isAdmin;
-  if (!isAdmin) return;
+  if (!isAdmin) {
+    JoyGolf.revealCards();
+    return;
+  }
 
   document.getElementById("practiceQueue").innerHTML = JoyGolf.skeleton(2);
   document.getElementById("scoreQueue").innerHTML = JoyGolf.skeleton(2);
 
   await Promise.all([loadPracticeQueue(), loadScoreQueue()]);
-})();
+  JoyGolf.revealCards();
+})().catch((err) => JoyGolf.fatal(err));
 
 // 대기열 항목의 작성자 프로필을 한 번에 가져온다
 async function profileMapFor(logs) {
@@ -61,13 +65,24 @@ async function loadPracticeQueue() {
     .eq("verified", false)
     .order("practice_date", { ascending: false });
 
-  const logs = error ? [] : data || [];
+  const el = document.getElementById("practiceQueue");
+  const empty = document.getElementById("practiceEmpty");
+
+  // 운영진 화면에서 실패가 "대기열 비어있음"으로 보이면 승인이 밀린 걸 모르고 지나친다
+  if (error) {
+    document.getElementById("practiceCount").textContent = "0";
+    empty.hidden = true;
+    el.innerHTML = JoyGolf.errorState("연습 인증 대기열을 불러오지 못했어요", error);
+    return;
+  }
+
+  const logs = data || [];
   document.getElementById("practiceCount").textContent = logs.length;
-  document.getElementById("practiceEmpty").hidden = logs.length > 0;
+  empty.hidden = logs.length > 0;
 
   const profiles = await profileMapFor(logs);
 
-  document.getElementById("practiceQueue").innerHTML = logs
+  el.innerHTML = logs
     .map((p) =>
       queueItem({
         author: profiles[p.user_id],
@@ -91,13 +106,23 @@ async function loadScoreQueue() {
     .eq("verified", false)
     .order("round_date", { ascending: false });
 
-  const logs = error ? [] : data || [];
+  const el = document.getElementById("scoreQueue");
+  const empty = document.getElementById("scoreEmpty");
+
+  if (error) {
+    document.getElementById("scoreCount").textContent = "0";
+    empty.hidden = true;
+    el.innerHTML = JoyGolf.errorState("스코어 인증 대기열을 불러오지 못했어요", error);
+    return;
+  }
+
+  const logs = data || [];
   document.getElementById("scoreCount").textContent = logs.length;
-  document.getElementById("scoreEmpty").hidden = logs.length > 0;
+  empty.hidden = logs.length > 0;
 
   const profiles = await profileMapFor(logs);
 
-  document.getElementById("scoreQueue").innerHTML = logs
+  el.innerHTML = logs
     .map((s) =>
       queueItem({
         author: profiles[s.user_id],
