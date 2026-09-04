@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>후기게시판 | JoyGolf</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#f4f7f4" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#070c0a" media="(prefers-color-scheme: dark)" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="JoyGolf" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("joygolf-theme");
+        if (t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+  <div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
+  <div id="navbar"></div>
+
+  <main class="container">
+    <header class="page-head">
+      <p class="eyebrow">📝 Stories</p>
+      <h1 class="page-title">라운딩 후기 게시판</h1>
+      <p class="subtitle">오늘의 인생샷, 웃긴 에피소드, 라운딩 후기를 자유롭게 남겨보세요.</p>
+    </header>
+
+    <section class="card card-accent">
+      <div class="section-label"><h3>새 글 작성</h3></div>
+      <form id="postForm">
+        <label for="postTitle">제목</label>
+        <input type="text" id="postTitle" required placeholder="예: 오늘 첫 이글 했습니다 🎉" />
+
+        <label for="postContent">내용</label>
+        <textarea id="postContent" rows="4" placeholder="후기를 남겨주세요"></textarea>
+
+        <label for="postPhoto">사진 (선택)</label>
+        <input type="file" id="postPhoto" accept="image/*" />
+
+        <button type="submit" class="btn" id="submitBtn" style="margin-top: 18px;">✍️ 등록</button>
+      </form>
+    </section>
+
+    <div id="postList"></div>
+    <p class="empty-state" id="postEmpty" style="display:none;">아직 게시글이 없어요. 첫 후기를 남겨보세요!</p>
+  </main>
+
+  <div id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/supabaseClient.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/board.js"></script>
+  <script src="js/pwa.js"></script>
+</body>
+</html>

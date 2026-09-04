@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>스코어인증 | JoyGolf</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#f4f7f4" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#070c0a" media="(prefers-color-scheme: dark)" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="JoyGolf" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("joygolf-theme");
+        if (t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+  <div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
+  <div id="navbar"></div>
+
+  <main class="container">
+    <header class="page-head">
+      <p class="eyebrow">⛳ Scorecard</p>
+      <h1 class="page-title">스코어 인증</h1>
+      <p class="subtitle">골프존/필드 스코어카드를 인증하고 성장 그래프를 채워보세요.</p>
+    </header>
+
+    <div class="grid-2">
+      <section class="card card-accent">
+        <div class="section-label"><h3>새 라운드 인증 등록</h3></div>
+        <form id="scoreForm">
+          <div class="form-row">
+            <div>
+              <label for="roundDate">라운드 날짜</label>
+              <input type="date" id="roundDate" required />
+            </div>
+            <div>
+              <label for="courseName">코스/골프존 지점</label>
+              <input type="text" id="courseName" placeholder="예: OO CC / OO 골프존" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div>
+              <label for="totalScore">토탈 스코어</label>
+              <input type="number" id="totalScore" required placeholder="예: 92" />
+            </div>
+            <div>
+              <label for="par">파(기준타수)</label>
+              <input type="number" id="par" value="72" required />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div>
+              <label for="putts">퍼팅 수 (선택)</label>
+              <input type="number" id="putts" placeholder="예: 34" />
+            </div>
+            <div>
+              <label>페어웨이 안착 (선택)</label>
+              <div style="display:flex; gap:8px;">
+                <input type="number" id="fairwaysHit" placeholder="적중" />
+                <input type="number" id="fairwaysTotal" placeholder="전체" />
+              </div>
+            </div>
+          </div>
+
+          <label>그린 적중 GIR (선택, 예: 4/18)</label>
+          <div style="display:flex; gap:8px;">
+            <input type="number" id="girHit" placeholder="적중" />
+            <input type="number" id="girTotal" placeholder="전체" />
+          </div>
+
+          <label for="note">한 줄 후기 (선택)</label>
+          <input type="text" id="note" placeholder="오늘 라운드 소감" />
+
+          <label for="photo">스코어카드 인증샷</label>
+          <input type="file" id="photo" accept="image/*" />
+          <p class="hint">골프존 결과화면 또는 필드 스코어카드 사진을 첨부해주세요.</p>
+
+          <button type="submit" class="btn" id="submitBtn" style="margin-top: 18px;">✅ 인증 등록</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <div class="section-label"><h3>내 스코어 기록</h3></div>
+        <div id="scoreList"></div>
+        <p class="empty-state" id="scoreEmpty" style="display:none;">아직 등록된 스코어 기록이 없어요.</p>
+      </section>
+    </div>
+  </main>
+
+  <div id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/supabaseClient.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/score.js"></script>
+  <script src="js/pwa.js"></script>
+</body>
+</html>

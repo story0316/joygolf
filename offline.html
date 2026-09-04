@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>오프라인 | JoyGolf</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("joygolf-theme");
+        if (t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+  <div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
+
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-logo">📡</div>
+      <h1 class="auth-title" style="font-size: 1.4rem;">오프라인이에요</h1>
+      <p class="subtitle" style="margin-top: 8px;">
+        네트워크가 끊겨서 최신 기록을 불러올 수 없어요.<br />
+        연결이 돌아오면 자동으로 다시 시도할 수 있어요.
+      </p>
+      <button class="btn btn-block" style="margin-top: 20px;" onclick="location.reload()">다시 시도</button>
+      <p class="hint" style="margin-top: 14px;">이미 본 화면은 오프라인에서도 열려요.</p>
+    </div>
+  </div>
+
+  <script>
+    // 네트워크가 돌아오면 자동 새로고침
+    window.addEventListener("online", () => location.reload());
+  </script>
+</body>
+</html>

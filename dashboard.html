@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>대시보드 | JoyGolf</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#f4f7f4" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#070c0a" media="(prefers-color-scheme: dark)" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="JoyGolf" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("joygolf-theme");
+        if (t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+  <div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
+  <div id="navbar"></div>
+
+  <main class="container">
+    <header class="page-head">
+      <p class="eyebrow">✨ Today's Swing</p>
+      <h1 class="page-title">오늘도 좋은 스윙 되세요</h1>
+      <p class="subtitle" id="welcomeMsg"></p>
+    </header>
+
+    <div class="bento">
+      <section class="card card-accent span-6">
+        <div class="level-box">
+          <div class="level-emoji" id="levelEmoji">🌱</div>
+          <div style="flex: 1; min-width: 0;">
+            <div class="list-item-head">
+              <span class="level-title" id="levelTitle">Lv.1 필드 새싹</span>
+              <span class="badge badge-green" id="levelPoints">0 pt</span>
+            </div>
+            <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%;"></div></div>
+            <p class="hint" id="progressHint"></p>
+          </div>
+        </div>
+        <div class="stat-tiles" id="statTiles"></div>
+      </section>
+
+      <section class="card span-6">
+        <div class="section-label">
+          <h3>📈 스코어 추이</h3>
+          <a href="score.html" class="badge badge-gray">인증 추가 →</a>
+        </div>
+        <p class="hint" id="trendHint" style="margin-bottom: 10px;"></p>
+        <div class="chart-box"><canvas id="scoreTrendChart"></canvas></div>
+        <p class="empty-state" id="trendEmpty" style="display:none;">
+          아직 그릴 기록이 부족해요.<br />라운드를 2회 이상 인증하면 성장 곡선이 나타나요 📈
+        </p>
+      </section>
+
+      <section class="card span-3">
+        <div class="section-label">
+          <h3>⬡ 내 육각형 역량</h3>
+        </div>
+        <p class="hint" id="radarHint" style="margin-bottom: 8px;">최근 6개월 인증 기록을 기반으로 계산돼요.</p>
+        <div class="chart-box"><canvas id="radarChart"></canvas></div>
+      </section>
+
+      <section class="card span-3">
+        <div class="section-label">
+          <h3>🎖️ 획득 배지</h3>
+        </div>
+        <div id="badgeList" class="stat-tiles" style="margin-top: 4px;"></div>
+        <p class="empty-state" id="badgeEmpty" style="display:none;">아직 배지가 없어요.<br />첫 인증을 등록해보세요!</p>
+      </section>
+
+      <section class="card span-3">
+        <div class="section-label">
+          <h3>🕓 최근 활동</h3>
+        </div>
+        <div id="recentActivity"></div>
+        <p class="empty-state" id="activityEmpty" style="display:none;">아직 활동 기록이 없어요.</p>
+      </section>
+
+      <section class="card span-3">
+        <div class="section-label">
+          <h3>📅 다가오는 모임</h3>
+          <a href="meetup.html" class="badge badge-gray">전체 보기 →</a>
+        </div>
+        <div id="upcomingMeetups"></div>
+        <p class="empty-state" id="meetupEmpty" style="display:none;">예정된 모임이 없어요.</p>
+        <div class="btn-row">
+          <a href="meetup.html" class="btn btn-outline btn-sm">➕ 모임 만들기</a>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/supabaseClient.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/pwa.js"></script>
+</body>
+</html>
